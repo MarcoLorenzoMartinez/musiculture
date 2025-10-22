@@ -184,23 +184,6 @@
       globe.attr("r", currentScale);
       svg.selectAll("path").attr("d", path);
     });
-
-    // Botón para pausar/reanudar rotación
-    document.getElementById("toggle-rotation").addEventListener("click", (e) => {
-      autoRotate = !autoRotate;
-      e.target.textContent = autoRotate ? "⏸️ Pausar rotación" : "▶️ Reanudar rotación";
-    });
-
-    // Botón para resetear la vista
-    document.getElementById("reset-view").addEventListener("click", () => {
-      currentScale = 350;
-      rotation = [0, 0];
-      projection.scale(currentScale).rotate(rotation);
-      globe.attr("r", currentScale);
-      svg.selectAll("path").attr("d", path);
-      autoRotate = true;
-      document.getElementById("toggle-rotation").textContent = "⏸️ Pausar rotación";
-    });
   </script>
 </body>
 </html>
