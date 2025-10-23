@@ -1,7 +1,52 @@
 body {
-  margin: 0;
-  overflow: hidden;
-  background: #101010;
+  background: #1b1b1b;
   color: white;
-  font-family: sans-serif;
+  font-family: Arial, sans-serif;
+  text-align: center;
+  margin: 0;
+  padding: 20px;
+}
+
+svg {
+  cursor: grab;
+}
+
+svg:active {
+  cursor: grabbing;
+}
+
+.country {
+  fill: #4CAF50;
+  stroke: #111;
+  stroke-width: 0.5px;
+}
+
+.country:hover {
+  fill: #81C784;
+}
+
+#info-box {
+  margin-top: 15px;
+  font-size: 18px;
+  color: #ccc;
+}
+
+#controls {
+  margin-top: 10px;
+  font-size: 14px;
+}
+
+button {
+  background: #4CAF50;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  margin: 5px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+button:hover {
+  background: #81C784;
 }
