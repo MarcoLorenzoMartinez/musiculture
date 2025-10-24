@@ -1,27 +1,26 @@
-// frontend/js/globe.js
-/* Crea y controla el globo con D3: proyección ortográfica (globo 3D estilizado), 
-carga del GeoJSON del mundo, dibujo de países, rotación automática, 
-y controles de usuario (arrastrar para rotar y rueda para zoom). */
+/* globe.js
+   Crea y controla el globo con D3: proyección ortográfica, carga del GeoJSON,
+   dibujo de países, rotación automática, y controles de interacción (drag + zoom).
+*/
 
-// Estado global del globo: tamaño, rotación y flags de interacción
-const width = 800, height = 800; // Tamaño del SVG del globo
-let projection, path, svg, infoBox, globe; // Variables D3 para proyección, ruta, SVG y cuadro de información
-let currentScale = 350; // Escala inicial de la proyección
-let rotation = [0, 0]; // Rotación inicial [longitud, latitud]
-let autoRotate = true; // Flag para rotación automática
-let velocity = [-0.1, 0]; // Velocidad de rotación automática
+const width = 800, height = 800;
+let projection, path, svg, globe;
+let currentScale = 350;
+let rotation = [0, 0];
+let autoRotate = true;
+let velocity = [-0.1, 0];
 
-// Inicializa la proyección, dibuja el océano y carga el GeoJSON de países.
-// onCountryClick: callback que será llamado con el nombre del país al hacer click.
 function initGlobe(onCountryClick) {
-  projection = d3.geoOrthographic() // Crea la proyección ortográfica
+  projection = d3.geoOrthographic()
     .scale(currentScale)
-    .translate([width / 2, height / 2]) // Centra el globo en el SVG
-    .clipAngle(90); // Recorta partes no visibles para simular esfera
+    .translate([width / 2, height / 2])
+    .clipAngle(90);
 
-  path = d3.geoPath().projection(projection); // Crea el generador de rutas
-  svg = d3.select("#globe"); // Selecciona el SVG del globo
-  infoBox = document.getElementById("info-box"); // Selecciona el cuadro de información
+  path = d3.geoPath().projection(projection);
+  svg = d3.select("#globe-container").append("svg")
+    .attr("id", "globe")
+    .attr("width", width)
+    .attr("height", height);
 
   // Fondo azul (océano)
   globe = svg.append("circle")
@@ -37,24 +36,19 @@ function initGlobe(onCountryClick) {
         .data(data.features)
         .enter()
         .append("path")
-          .attr("d", path)
-          .attr("class", "country")
-          .on("click", (event, d) => {
-            onCountryClick(d.properties.name);
-          });
+        .attr("d", path)
+        .attr("class", "country")
+        .on("click", (event, d) => onCountryClick(d.properties.name));
 
-      // Iniciar rotación automática al cargar el globo
       startAutoRotation();
     });
 
-  // Añadir controles de interacción
   addInteraction();
 }
 
-// Rotación automática
 function startAutoRotation() {
-  d3.timer(() => { // Ejecuta el callback de forma continua (~60fps)
-    if (autoRotate) { // Si la rotación automática está activada, actualiza la rotación
+  d3.timer(() => {
+    if (autoRotate) {
       rotation[0] += velocity[0];
       rotation[1] += velocity[1];
       projection.rotate(rotation);
@@ -63,17 +57,16 @@ function startAutoRotation() {
   });
 }
 
-// Controles de interacción (arrastrar, zoom)
 function addInteraction() {
   let lastPos = null;
 
   svg.call(
-    d3.drag() // Convierte el SVG en un área arrastrable
-      .on("start", (event) => { // Al iniciar el arrastre, guarda la posición inicial y desactiva la rotación automática
+    d3.drag()
+      .on("start", (event) => {
         lastPos = [event.x, event.y];
         autoRotate = false;
       })
-      .on("drag", (event) => { // Al arrastrar, calcula el cambio de posición y actualiza la rotación
+      .on("drag", (event) => {
         const dx = event.x - lastPos[0];
         const dy = event.y - lastPos[1];
         rotation[0] += dx * 0.5;
@@ -85,14 +78,11 @@ function addInteraction() {
       })
   );
 
-  svg.on("wheel", (event) => { // Control de zoom con la rueda del ratón
+  svg.on("wheel", (event) => {
     event.preventDefault();
-
-    const zoomFactor = event.deltaY > 0 ? 0.9 : 1.1; // deltaY > 0 = rueda hacia abajo = zoom out, < 0 = rueda hacia arriba = zoom in
+    const zoomFactor = event.deltaY > 0 ? 0.9 : 1.1;
     currentScale *= zoomFactor;
     currentScale = Math.max(150, Math.min(800, currentScale));
-
-    // Actualiza la proyección y el radio del círculo del globo
     projection.scale(currentScale);
     globe.attr("r", currentScale);
     svg.selectAll("path").attr("d", path);

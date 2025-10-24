@@ -1,26 +1,27 @@
-/* frontend/css/style.css */
-/* Estilos básicos de la página. */
+/* style.css */
+/* Define el estilo base para MUSICULTURE con fondo oscuro y texto blanco. */
 
-/* Estilos base: fondo oscuro, tipografía y espaciados */
 body {
+  margin: 0;
+  padding: 0;
   background: #1b1b1b;
   color: white;
   font-family: Arial, sans-serif;
-  text-align: center;
-  margin: 0;
-  padding: 20px;
+  overflow: hidden; /* Evita scroll innecesario */
 }
 
-/* Cursor del SVG para indicar arrastrar */
-svg {
+/* SVG del globo */
+#globe {
   cursor: grab;
+  display: block;
+  margin: 0 auto;
 }
 
-svg:active {
+#globe:active {
   cursor: grabbing;
 }
 
-/* Estilos de países y hover */
+/* Países y hover */
 .country {
   fill: #4CAF50;
   stroke: #111;
@@ -29,26 +30,4 @@ svg:active {
 
 .country:hover {
   fill: #81C784;
-}
-
-/* Estilos del cuadro de información y botones (si se añaden) */
-#info-box {
-  margin-top: 15px;
-  font-size: 18px;
-  color: #ccc;
-}
-
-button {
-  background: #4CAF50;
-  color: white;
-  border: none;
-  padding: 8px 16px;
-  margin: 5px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
-}
-
-button:hover {
-  background: #81C784;
 }
