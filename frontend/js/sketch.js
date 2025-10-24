@@ -39,8 +39,8 @@ function setup() {
 }
 
 function draw() {
-  background(27, 27, 27); // Fondo oscuro
-  fill(255);
+  background(255); // Fondo blanco
+  fill(0); // Texto negro
 
   // Título principal
   textSize(48);

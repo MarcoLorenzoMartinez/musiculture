@@ -1,15 +1,6 @@
 /* style.css */
 /* Define el estilo base para MUSICULTURE con fondo oscuro y texto blanco. */
 
-body {
-  margin: 0;
-  padding: 0;
-  background: #1b1b1b;
-  color: white;
-  font-family: Arial, sans-serif;
-  overflow: hidden; /* Evita scroll innecesario */
-}
-
 /* SVG del globo */
 #globe {
   cursor: grab;
