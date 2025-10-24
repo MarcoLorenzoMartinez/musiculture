@@ -1,3 +1,7 @@
+/* frontend/css/style.css */
+/* Estilos básicos de la página. */
+
+/* Estilos base: fondo oscuro, tipografía y espaciados */
 body {
   background: #1b1b1b;
   color: white;
@@ -7,6 +11,7 @@ body {
   padding: 20px;
 }
 
+/* Cursor del SVG para indicar arrastrar */
 svg {
   cursor: grab;
 }
@@ -15,6 +20,7 @@ svg:active {
   cursor: grabbing;
 }
 
+/* Estilos de países y hover */
 .country {
   fill: #4CAF50;
   stroke: #111;
@@ -25,6 +31,7 @@ svg:active {
   fill: #81C784;
 }
 
+/* Estilos del cuadro de información y botones (si se añaden) */
 #info-box {
   margin-top: 15px;
   font-size: 18px;

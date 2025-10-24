@@ -1,21 +1,31 @@
+<!-- index.html -->
+ <!-- Define la estructura básica de la página: título, hoja de estilos, carga de D3, 
+ el elemento SVG donde se dibuja el globo, un cuadro de información y los scripts 
+ del proyecto (wikidata, globe y main) en el orden correcto. -->
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
   <title>MUSICULTURE</title>
+  <!-- Estilos globales -->
   <link rel="stylesheet" href="frontend/css/style.css" />
+  <!-- D3.js v7 para proyecciones y manipulación SVG (globo) -->
   <script src="https://d3js.org/d3.v7.min.js"></script>
 </head>
 <body>
   <h1>MUSICULTURE</h1>
 
+  <!-- SVG donde dibujaremos el globo -->
   <svg id="globe" width="800" height="800"></svg>
 
+  <!-- Cuadro de información que muestra mensajes al usuario -->
   <div id="info-box">
     Haz clic en un país 🌍 | Arrastra para rotar | Rueda del ratón para zoom
   </div>
 
-  <!-- Cargar scripts en orden -->
+  <!-- Cargar scripts en orden: wikidata, globe, main (lógica que los une).
+       Se hace así porque main depende de funciones de wikidata y globe. -->
   <script src="frontend/js/wikidata.js"></script>
   <script src="frontend/js/globe.js"></script>
   <script src="frontend/js/main.js"></script>
