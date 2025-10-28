@@ -23,7 +23,12 @@ function setup() {
   // Inicializar el globo D3
   initGlobe(async (countryName) => {
     const wikidataId = await getWikidataId(countryName);
-    console.log(`🌍 ${countryName} → ${wikidataId || "No encontrado"}`);
+    if (wikidataId) {
+      loadMusicForCountry(wikidataId);
+      console.log(`🌍 ${countryName} → ${wikidataId}`);
+    } else {
+      console.log("No se encontró el ID de Wikidata para el país:", countryName);
+    }
   });
 }
 
@@ -58,3 +63,29 @@ function windowResized() {
 
   resizeGlobe(windowWidth, windowHeight - menuHeight);
 }
+
+async function loadMusicForCountry(wikidataId) {
+  const response = await fetch(`https://musiculture-backend.onrender.com/music/${wikidataId}`);
+  const data = await response.json();
+
+  if (!Array.isArray(data)) {
+    console.log("No hay artistas para este país");
+    return;
+  }
+
+  // Elimina música anterior
+  selectAll('.musicFrame').forEach(f => f.remove());
+
+  // Muestra playlist aleatoria (por ejemplo, 3 artistas)
+  data.slice(0, 3).forEach((artist) => {
+    const iframe = createElement('iframe');
+    iframe.attribute('class', 'musicFrame');
+    iframe.attribute('src', `https://embed.music.apple.com/us/artist/${artist.appleMusicId}`);
+    iframe.attribute('width', '300');
+    iframe.attribute('height', '380');
+    iframe.attribute('allow', 'autoplay *; encrypted-media *;');
+    iframe.style('border', 'none');
+    iframe.parent(document.body);
+  });
+}
+
