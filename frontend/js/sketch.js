@@ -1,24 +1,27 @@
 /* sketch.js (p5.js)
    Interfaz visual de MUSICULTURE:
-   solo barra verde superior y el globo D3 ocupando el resto del espacio.
+   barra verde superior con logo e integración del globo D3.
 */
 
 let menuHeight = 70; // Altura de la barra superior
+let logoImg; // Imagen del logo
+
+function preload() {
+  // Carga el logo antes de setup()
+  logoImg = loadImage("frontend/assets/completo_sinFondo.png");
+}
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
   noStroke();
-  textAlign(LEFT, CENTER);
-  textFont("Arial");
 
-  // Crear contenedor para el globo, debajo de la barra
+  // Crear contenedor para el globo debajo de la barra
   const globeDiv = select("#globe-container");
   globeDiv.position(0, menuHeight);
   globeDiv.size(windowWidth, windowHeight - menuHeight);
 
-  // Inicializar globo
+  // Inicializar el globo D3
   initGlobe(async (countryName) => {
-    // En esta versión no mostramos texto, solo se deja lista la lógica futura
     const wikidataId = await getWikidataId(countryName);
     console.log(`🌍 ${countryName} → ${wikidataId || "No encontrado"}`);
   });
@@ -31,20 +34,27 @@ function draw() {
   fill("#2E7D32");
   rect(0, 0, width, menuHeight);
 
-  // === Título del proyecto ===
-  fill(255);
-  textSize(28);
-  text("🎵 MUSICULTURE", 25, menuHeight / 2);
+  // === Fondo blanco semitransparente detrás del logo ===
+  fill(255, 150); // blanco con transparencia (255 blanco, 150 alfa transparente)
+  const padding = 10;
+  const logoHeight = menuHeight - padding * 2;
+  const logoWidth = (logoImg.width / logoImg.height) * logoHeight;
+  const x = 25; // margen izquierdo
+  const y = padding;
+
+  rect(x - 5, y - 5, logoWidth + 10, logoHeight + 10, 8);
+
+  // === Logo ===
+  image(logoImg, x, y, logoWidth, logoHeight);
 }
 
 function windowResized() {
   resizeCanvas(windowWidth, windowHeight);
 
-  // Reajustar contenedor del globo
+  // Ajustar el contenedor del globo
   const globeDiv = select("#globe-container");
   globeDiv.position(0, menuHeight);
   globeDiv.size(windowWidth, windowHeight - menuHeight);
 
-  // Ajustar globo al nuevo tamaño
   resizeGlobe(windowWidth, windowHeight - menuHeight);
 }
