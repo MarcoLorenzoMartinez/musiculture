@@ -1,35 +1,40 @@
 /* globe.js
-   Crea y controla el globo con D3: proyección ortográfica, carga del GeoJSON,
-   dibujo de países, rotación automática, y controles de interacción (drag + zoom).
+   Crea y controla el globo con D3: proyección ortográfica, rotación y zoom.
 */
 
-const width = 800, height = 800;
 let projection, path, svg, globe;
-let currentScale = 350;
-let rotation = [0, 0];
-let autoRotate = true;
-let velocity = [-0.1, 0];
+let currentScale, rotation, autoRotate, velocity;
+let globeWidth, globeHeight;
 
 function initGlobe(onCountryClick) {
+  const container = document.getElementById("globe-container");
+  globeWidth = container.offsetWidth;
+  globeHeight = container.offsetHeight;
+
+  currentScale = Math.min(globeWidth, globeHeight) / 2.3;
+  rotation = [0, 0];
+  autoRotate = true;
+  velocity = [-0.1, 0];
+
   projection = d3.geoOrthographic()
     .scale(currentScale)
-    .translate([width / 2, height / 2])
+    .translate([globeWidth / 2, globeHeight / 2])
     .clipAngle(90);
 
   path = d3.geoPath().projection(projection);
   svg = d3.select("#globe-container").append("svg")
     .attr("id", "globe")
-    .attr("width", width)
-    .attr("height", height);
+    .attr("width", globeWidth)
+    .attr("height", globeHeight);
 
-  // Fondo azul (océano)
+  // Océano
   globe = svg.append("circle")
-    .attr("cx", width / 2)
-    .attr("cy", height / 2)
+    .attr("cx", globeWidth / 2)
+    .attr("cy", globeHeight / 2)
     .attr("r", projection.scale())
     .attr("fill", "#1565C0");
 
-  // Cargar mapa mundial
+  // Mapa mundial
   d3.json("https://raw.githubusercontent.com/holtzy/D3-graph-gallery/master/DATA/world.geojson")
     .then(data => {
       svg.selectAll("path")
@@ -87,4 +92,26 @@ function addInteraction() {
     globe.attr("r", currentScale);
     svg.selectAll("path").attr("d", path);
   });
+}
+
+// === Ajuste dinámico del tamaño ===
+function resizeGlobe(newWidth, newHeight) {
+  globeWidth = newWidth;
+  globeHeight = newHeight;
+  currentScale = Math.min(globeWidth, globeHeight) / 2.3;
+
+  projection
+    .translate([globeWidth / 2, globeHeight / 2])
+    .scale(currentScale);
+
+  d3.select("#globe")
+    .attr("width", globeWidth)
+    .attr("height", globeHeight);
+
+  globe
+    .attr("cx", globeWidth / 2)
+    .attr("cy", globeHeight / 2)
+    .attr("r", currentScale);
+
+  svg.selectAll("path").attr("d", path);
 }
