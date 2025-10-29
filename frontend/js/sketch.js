@@ -35,6 +35,17 @@ function setup() {
       console.log("No se encontró el ID de Wikidata para el país:", countryName);
     }
   });
+
+  // Botón para activar modo de control manual
+  let gestureButton = createButton("🖐 Activar control por manos");
+  gestureButton.position(20, menuHeight + 10);
+  gestureButton.mousePressed(() => {
+    handControlActive = !handControlActive;
+    if (handControlActive) setupHandControl();
+    gestureButton.html(handControlActive ? "🚫 Desactivar control por manos" : "🖐 Activar control por manos");
+  });
+
+
 }
 
 function draw() {
@@ -68,6 +79,9 @@ function draw() {
 
   // === Barra inferior (reproductor) ===
   drawPlayerBar();
+
+  // === Control por gestos de la mano ===
+  drawHandControl();
 }
 
 function drawPlayerBar() {
