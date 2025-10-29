@@ -5,6 +5,7 @@
 let projection, path, svg, globe;
 let currentScale, rotation, autoRotate, velocity;
 let globeWidth, globeHeight;
+let selectedCountry = null;
 
 function initGlobe(onCountryClick) {
   const container = document.getElementById("globe-container");
@@ -43,7 +44,17 @@ function initGlobe(onCountryClick) {
         .append("path")
         .attr("d", path)
         .attr("class", "country")
-        .on("click", (event, d) => onCountryClick(d.properties.name));
+        .on("click", (event, d) => {
+          // Desmarcar país anterior
+          svg.selectAll(".country").classed("country-selected", false);
+
+          // Marcar país actual
+          d3.select(event.currentTarget).classed("country-selected", true);
+          selectedCountry = d.properties.name;
+
+          // Notificar callback externo
+          onCountryClick(d.properties.name);
+        });
 
       startAutoRotation();
     });
