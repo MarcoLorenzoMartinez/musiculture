@@ -1,15 +1,18 @@
 /* sketch.js (p5.js)
    Interfaz visual de MUSICULTURE:
-   barra verde superior con logo e integración del globo D3.
+   barra verde superior con logo, globo D3 y barra inferior tipo reproductor.
 */
 
 let menuHeight = 70; // Altura de la barra superior
-let logoImg; // Imagen del logo
-let currentAudio = null; // Audio activo
-let currentSongInfo = null; // Información de la canción actual {artist, track, country}
+let playerHeight = 100; // Altura de la barra inferior
+let logoImg;
+let currentAudio = null;
+let currentSongInfo = null;
+let playlistArtists = [];
+let isPlaying = false;
+let albumArt = null; // Imagen de portada actual
 
 function preload() {
-  // Carga el logo antes de setup()
   logoImg = loadImage("frontend/assets/completo_sinFondo.png");
 }
 
@@ -17,12 +20,12 @@ function setup() {
   createCanvas(windowWidth, windowHeight);
   noStroke();
 
-  // Crear contenedor para el globo debajo de la barra
+  // Crear contenedor para el globo entre las dos barras
   const globeDiv = select("#globe-container");
   globeDiv.position(0, menuHeight);
-  globeDiv.size(windowWidth, windowHeight - menuHeight);
+  globeDiv.size(windowWidth, windowHeight - menuHeight - playerHeight);
 
-  // Inicializar el globo D3
+  // Inicializar globo D3
   initGlobe(async (countryName) => {
     const wikidataId = await getWikidataId(countryName);
     if (wikidataId) {
@@ -37,11 +40,10 @@ function setup() {
 function draw() {
   background(20);
 
-  // === Barra verde superior ===
+  // === Barra superior ===
   fill("#2E7D32");
   rect(0, 0, width, menuHeight);
 
-  // === Fondo blanco semitransparente detrás del logo ===
   fill(255, 150);
   const padding = 10;
   const logoHeight = menuHeight - padding * 2;
@@ -50,40 +52,86 @@ function draw() {
   const y = padding;
 
   rect(x - 5, y - 5, logoWidth + 10, logoHeight + 10, 8);
-
-  // === Logo ===
   image(logoImg, x, y, logoWidth, logoHeight);
 
-  // === Información de la canción actual ===
+  // === Información actual (en barra superior) ===
   if (currentSongInfo) {
-    fill(255); // Texto blanco
+    fill(255);
     textSize(16);
     textAlign(LEFT, CENTER);
     textFont("Arial, sans-serif");
-    
-    const textX = x + logoWidth + 30;
-    const textY = menuHeight / 2;
-    
-    // Nombre del país
     textStyle(BOLD);
-    text(`🌍 ${currentSongInfo.country}`, textX, textY - 12);
-    
-    // Nombre de artista y canción
+    text(`🌍 ${currentSongInfo.country}`, x + logoWidth + 30, menuHeight / 2 - 12);
     textStyle(NORMAL);
-    text(`🎵 ${currentSongInfo.artist} — ${currentSongInfo.track}`, textX, textY + 12);
+    text(`🎵 ${currentSongInfo.artist} — ${currentSongInfo.track}`, x + logoWidth + 30, menuHeight / 2 + 12);
+  }
+
+  // === Barra inferior (reproductor) ===
+  drawPlayerBar();
+}
+
+function drawPlayerBar() {
+  fill("#2E7D32");
+  rect(0, height - playerHeight, width, playerHeight);
+
+  if (!currentSongInfo) return;
+
+  const yBase = height - playerHeight / 2;
+  const padding = 25;
+
+  // Portada
+  if (albumArt) {
+    image(albumArt, padding, height - playerHeight + 10, 80, 80);
+  } else {
+    fill(255, 40);
+    rect(padding, height - playerHeight + 10, 80, 80, 8);
+  }
+
+  // Texto (canción + artista)
+  fill(255);
+  textAlign(LEFT, CENTER);
+  textSize(16);
+  textFont("Arial, sans-serif");
+  text(currentSongInfo.track, padding + 100, yBase - 10);
+  textSize(14);
+  fill(230);
+  text(currentSongInfo.artist, padding + 100, yBase + 12);
+
+  // Botones
+  const buttonY = yBase;
+  const iconSize = 28;
+  const spacing = 60;
+  const centerX = width - 150;
+
+  drawIcon("⏮️", centerX - spacing, buttonY, iconSize, () => previousSong());
+  drawIcon(isPlaying ? "⏸️" : "▶️", centerX, buttonY, iconSize, () => togglePlay());
+  drawIcon("⏭️", centerX + spacing, buttonY, iconSize, () => nextSong());
+}
+
+function drawIcon(symbol, x, y, size, onClick) {
+  textAlign(CENTER, CENTER);
+  textSize(size);
+  fill(255);
+  text(symbol, x, y);
+
+  // Detección de clic manual
+  if (mouseIsPressed) {
+    const d = dist(mouseX, mouseY, x, y);
+    if (d < size / 1.2) {
+      onClick();
+    }
   }
 }
 
 function windowResized() {
   resizeCanvas(windowWidth, windowHeight);
-
-  // Ajustar el contenedor del globo
   const globeDiv = select("#globe-container");
   globeDiv.position(0, menuHeight);
-  globeDiv.size(windowWidth, windowHeight - menuHeight);
-
-  resizeGlobe(windowWidth, windowHeight - menuHeight);
+  globeDiv.size(windowWidth, windowHeight - menuHeight - playerHeight);
+  resizeGlobe(windowWidth, windowHeight - menuHeight - playerHeight);
 }
+
+// === Lógica de reproducción ===
 
 async function loadMusicForCountry(wikidataId, countryName) {
   const response = await fetch(`https://musiculture-backend.onrender.com/music/${wikidataId}`);
@@ -97,27 +145,13 @@ async function loadMusicForCountry(wikidataId, countryName) {
     return;
   }
 
-  // Guardar todos los artistas del país actual
   playlistArtists = data;
-
-  // Detener música anterior
-  if (currentAudio) {
-    currentAudio.stop();
-    currentAudio.remove();
-  }
-  selectAll(".musicFrame").forEach(f => f.remove());
-
-  // Reproducir la primera canción
-  await playRandomSong(countryName);
+  nextSong(countryName);
 }
 
-/**
- * Selecciona un artista aleatorio de la lista global y reproduce una canción aleatoria.
- */
-async function playRandomSong(countryName) {
+async function nextSong(countryName = currentSongInfo?.country) {
   if (!playlistArtists || playlistArtists.length === 0) return;
 
-  // Elegir un artista aleatorio
   const randomArtist = random(playlistArtists);
   const searchUrl = `https://itunes.apple.com/lookup?id=${randomArtist.appleMusicId}&entity=song&limit=10`;
 
@@ -126,30 +160,22 @@ async function playRandomSong(countryName) {
     const artistData = await res.json();
     const songs = artistData.results.filter(item => item.kind === "song");
 
-    if (songs.length === 0) {
-      console.log(`⚠️ ${randomArtist.artist} no tiene canciones con preview.`);
-      // Intentar con otro artista
-      return playRandomSong(countryName);
-    }
+    if (songs.length === 0) return nextSong(countryName);
 
     const randomSong = random(songs);
 
-    // Eliminar audios anteriores
+    // Limpiar audio anterior
     if (currentAudio) {
       currentAudio.stop();
       currentAudio.remove();
     }
     selectAll(".musicFrame").forEach(f => f.remove());
 
-    // Crear y configurar el nuevo audio
+    // Crear nuevo audio
     currentAudio = createAudio(randomSong.previewUrl);
-    currentAudio.attribute("controls", true);
+    currentAudio.attribute("controls", false);
     currentAudio.attribute("class", "musicFrame");
-    currentAudio.style("position", "fixed");
-    currentAudio.style("bottom", "20px");
-    currentAudio.style("right", "20px");
-    currentAudio.style("width", "300px");
-    currentAudio.style("z-index", "1000");
+    currentAudio.style("display", "none"); // oculto
     currentAudio.parent(document.body);
 
     currentSongInfo = {
@@ -157,19 +183,34 @@ async function playRandomSong(countryName) {
       track: randomSong.trackName,
       country: countryName
     };
+    isPlaying = true;
 
-    console.log(`🎶 Reproduciendo: ${randomSong.trackName} - ${randomArtist.artist}`);
+    // Cargar imagen de portada (si existe)
+    if (randomSong.artworkUrl100) {
+      loadImage(randomSong.artworkUrl100, img => albumArt = img);
+    } else {
+      albumArt = null;
+    }
+
     currentAudio.play();
-
-    // Cuando termina, reproducir otra canción
-    currentAudio.elt.addEventListener("ended", async () => {
-      console.log("⏭️ Canción terminada, pasando a la siguiente...");
-      await playRandomSong(countryName);
-    });
-
+    currentAudio.elt.addEventListener("ended", () => nextSong(countryName));
   } catch (error) {
     console.error(`Error cargando música de ${randomArtist.artist}:`, error);
-    // Intentar con otro artista
-    await playRandomSong(countryName);
+    await nextSong(countryName);
+  }
+}
+
+function previousSong() {
+  console.log("⏮️ (En una futura versión podríamos almacenar el historial y volver atrás)");
+}
+
+function togglePlay() {
+  if (!currentAudio) return;
+  if (isPlaying) {
+    currentAudio.pause();
+    isPlaying = false;
+  } else {
+    currentAudio.play();
+    isPlaying = true;
   }
 }
