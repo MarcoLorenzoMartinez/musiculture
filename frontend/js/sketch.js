@@ -5,6 +5,8 @@
 
 let menuHeight = 70; // Altura de la barra superior
 let logoImg; // Imagen del logo
+let currentAudio = null; // Audio activo
+let currentSongInfo = null; // Información de la canción actual {artist, track, country}
 
 function preload() {
   // Carga el logo antes de setup()
@@ -24,7 +26,7 @@ function setup() {
   initGlobe(async (countryName) => {
     const wikidataId = await getWikidataId(countryName);
     if (wikidataId) {
-      loadMusicForCountry(wikidataId);
+      loadMusicForCountry(wikidataId, countryName);
       console.log(`🌍 ${countryName} → ${wikidataId}`);
     } else {
       console.log("No se encontró el ID de Wikidata para el país:", countryName);
@@ -40,17 +42,36 @@ function draw() {
   rect(0, 0, width, menuHeight);
 
   // === Fondo blanco semitransparente detrás del logo ===
-  fill(255, 150); // blanco con transparencia (255 blanco, 150 alfa transparente)
+  fill(255, 150);
   const padding = 10;
   const logoHeight = menuHeight - padding * 2;
   const logoWidth = (logoImg.width / logoImg.height) * logoHeight;
-  const x = 25; // margen izquierdo
+  const x = 25;
   const y = padding;
 
   rect(x - 5, y - 5, logoWidth + 10, logoHeight + 10, 8);
 
   // === Logo ===
   image(logoImg, x, y, logoWidth, logoHeight);
+
+  // === Información de la canción actual ===
+  if (currentSongInfo) {
+    fill(255); // Texto blanco
+    textSize(16);
+    textAlign(LEFT, CENTER);
+    textFont("Arial, sans-serif");
+    
+    const textX = x + logoWidth + 30;
+    const textY = menuHeight / 2;
+    
+    // Nombre del país
+    textStyle(BOLD);
+    text(`🌍 ${currentSongInfo.country}`, textX, textY - 12);
+    
+    // Nombre de artista y canción
+    textStyle(NORMAL);
+    text(`🎵 ${currentSongInfo.artist} — ${currentSongInfo.track}`, textX, textY + 12);
+  }
 }
 
 function windowResized() {
@@ -64,28 +85,75 @@ function windowResized() {
   resizeGlobe(windowWidth, windowHeight - menuHeight);
 }
 
-async function loadMusicForCountry(wikidataId) {
+async function loadMusicForCountry(wikidataId, countryName) {
   const response = await fetch(`https://musiculture-backend.onrender.com/music/${wikidataId}`);
   const data = await response.json();
+  console.log("🎵 Datos recibidos:", data);
 
-  if (!Array.isArray(data)) {
-    console.log("No hay artistas para este país");
+  if (!Array.isArray(data) || data.length === 0) {
+    console.log("No hay artistas disponibles para este país");
+    currentSongInfo = null;
     return;
   }
 
-  // Elimina música anterior
+  // Detener y eliminar música anterior
+  if (currentAudio) {
+    currentAudio.stop();
+    currentAudio.remove();
+  }
   selectAll('.musicFrame').forEach(f => f.remove());
 
-  // Muestra playlist aleatoria (por ejemplo, 3 artistas)
-  data.slice(0, 3).forEach((artist) => {
-    const iframe = createElement('iframe');
-    iframe.attribute('class', 'musicFrame');
-    iframe.attribute('src', `https://embed.music.apple.com/us/artist/${artist.appleMusicId}`);
-    iframe.attribute('width', '300');
-    iframe.attribute('height', '380');
-    iframe.attribute('allow', 'autoplay *; encrypted-media *;');
-    iframe.style('border', 'none');
-    iframe.parent(document.body);
-  });
-}
+  // Buscar una canción aleatoria de un artista aleatorio
+  let songFound = false;
+  const shuffledArtists = data.sort(() => Math.random() - 0.5);
 
+  for (const artist of shuffledArtists) {
+    if (songFound) break;
+
+    const searchUrl = `https://itunes.apple.com/lookup?id=${artist.appleMusicId}&entity=song&limit=10`;
+    
+    try {
+      const res = await fetch(searchUrl);
+      const artistData = await res.json();
+      console.log("🎧 Respuesta iTunes:", artistData);
+
+      const songs = artistData.results.filter(item => item.kind === "song");
+
+      if (songs.length > 0) {
+        // Elegir una canción aleatoria
+        const randomSong = random(songs);
+        
+        // Crear elemento de audio
+        currentAudio = createAudio(randomSong.previewUrl);
+        currentAudio.attribute("controls", true);
+        currentAudio.attribute("class", "musicFrame");
+        currentAudio.style("position", "fixed");
+        currentAudio.style("bottom", "20px");
+        currentAudio.style("right", "20px");
+        currentAudio.style("width", "300px");
+        currentAudio.style("z-index", "1000");
+        currentAudio.parent(document.body);
+        
+        // Guardar información de la canción
+        currentSongInfo = {
+          artist: artist.artist,
+          track: randomSong.trackName,
+          country: countryName
+        };
+        
+        // Reproducir automáticamente (opcional)
+        currentAudio.play();
+        
+        console.log(`✅ Reproduciendo: ${randomSong.trackName} - ${artist.artist}`);
+        songFound = true;
+      }
+    } catch (error) {
+      console.error(`Error cargando música de ${artist.artist}:`, error);
+    }
+  }
+
+  if (!songFound) {
+    console.log("No se encontraron canciones con preview disponible");
+    currentSongInfo = null;
+  }
+}
