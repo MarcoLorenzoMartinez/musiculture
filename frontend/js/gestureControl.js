@@ -38,12 +38,12 @@ function setupHandControl() {
 
 	// Inicializar modelo de rostro
 	async function startFaceMesh() {
-    if (!faceMesh || !video) return;
-    while (true) {
-        const predictions = await faceMesh.detect(video);
-        faceMeshResults = predictions;
-        await new Promise(r => setTimeout(r, 100)); // 10 fps aprox
-    }
+		if (!faceMesh || !video) return;
+		while (true) {
+				const predictions = await faceMesh.detect(video);
+				faceMeshResults = predictions;
+				await new Promise(r => setTimeout(r, 100)); // 10 fps aprox
+		}
 }
 startFaceMesh();
 
@@ -132,23 +132,23 @@ function drawHandControl() {
 
 // === Dibuja un punto rojo en el centro del globo ===
 function drawCenterDot() {
-  // Eliminamos el punto anterior si existe
-  svg.selectAll(".center-dot").remove();
+	// Eliminamos el punto anterior si existe
+	svg.selectAll(".center-dot").remove();
 
-  // El grupo principal del globo (normalmente el primero dentro de <svg>)
-  const globeGroup = svg.select("g");
+	// El grupo principal del globo (normalmente el primero dentro de <svg>)
+	const globeGroup = svg.select("g");
 
-  // Calculamos el centro del globo (que es el centro de la proyección)
-  const [cx, cy] = projection([0, 0]); // centro geográfico del mapa (lat 0, lon 0)
+	// Calculamos el centro del globo (que es el centro de la proyección)
+	const [cx, cy] = projection([0, 0]); // centro geográfico del mapa (lat 0, lon 0)
 
-  globeGroup.append("circle")
-    .attr("class", "center-dot")
-    .attr("cx", 0)  // el grupo ya está trasladado al centro
-    .attr("cy", 0)
-    .attr("r", 6)
-    .style("fill", "red")
-    .style("stroke", "white")
-    .style("stroke-width", 2);
+	globeGroup.append("circle")
+		.attr("class", "center-dot")
+		.attr("cx", 0)	// el grupo ya está trasladado al centro
+		.attr("cy", 0)
+		.attr("r", 6)
+		.style("fill", "red")
+		.style("stroke", "white")
+		.style("stroke-width", 2);
 }
 
 function drawHandsOverlay(xPos, yPos, w, h) {
@@ -224,44 +224,44 @@ function detectNodGesture() {
 	lastNoseY = noseY;
 
 	if (gestureCooldown > 0) gestureCooldown--;
-    console.log("Asentir detectado");
+		console.log("Asentir detectado");
 }
 
 // === Ejecutar clic central ===
 function performCenterClick() {
-    console.log("👉 Clic central ejecutado");
-  const coords = projection.invert([globeWidth / 2, globeHeight / 2]);
-  const allCountries = d3.selectAll(".country").data();
+		console.log("👉 Clic central ejecutado");
+	const coords = projection.invert([globeWidth / 2, globeHeight / 2]);
+	const allCountries = d3.selectAll(".country").data();
 
-  const centeredCountry = allCountries.find(d =>
-    d3.geoContains(d, coords)
-  );
+	const centeredCountry = allCountries.find(d =>
+		d3.geoContains(d, coords)
+	);
 
-  if (centeredCountry) {
-    console.log("✅ Asentir detectado →", centeredCountry.properties.name);
+	if (centeredCountry) {
+		console.log("✅ Asentir detectado →", centeredCountry.properties.name);
 
-    // Visual feedback
-    d3.selectAll(".country").classed("country-selected", false);
-    d3.select(`[data-name='${centeredCountry.properties.name}']`)
-      .classed("country-selected", true);
+		// Visual feedback
+		d3.selectAll(".country").classed("country-selected", false);
+		d3.select(`[data-name='${centeredCountry.properties.name}']`)
+			.classed("country-selected", true);
 
-    getWikidataId(centeredCountry.properties.name).then(id => {
-      if (id) loadMusicForCountry(id, centeredCountry.properties.name);
-    });
+		getWikidataId(centeredCountry.properties.name).then(id => {
+			if (id) loadMusicForCountry(id, centeredCountry.properties.name);
+		});
 
-    // Animación rápida en el punto rojo
-    d3.select("#center-marker")
-      .transition()
-      .duration(150)
-      .attr("r", 12)
-      .attr("fill", "#00ff00")
-      .transition()
-      .duration(300)
-      .attr("r", 6)
-      .attr("fill", "red");
-  } else {
-    console.log("🤷‍♂️ Asentir detectado pero ningún país centrado");
-  }
+		// Animación rápida en el punto rojo
+		d3.select("#center-marker")
+			.transition()
+			.duration(150)
+			.attr("r", 12)
+			.attr("fill", "#00ff00")
+			.transition()
+			.duration(300)
+			.attr("r", 6)
+			.attr("fill", "red");
+	} else {
+		console.log("🤷‍♂️ Asentir detectado pero ningún país centrado");
+	}
 }
 
 

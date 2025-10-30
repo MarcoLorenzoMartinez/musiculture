@@ -1,29 +1,29 @@
 <!-- index.html -->
 <!-- Página principal de MUSICULTURE: define el entorno p5.js y D3, el globo,
-     y carga los scripts en el orden correcto (wikidata → globe → sketch). -->
+		 y carga los scripts en el orden correcto (wikidata → globe → sketch). -->
 
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <title>MUSICULTURE</title>
-  <link rel="stylesheet" href="frontend/css/style.css" />
+	<meta charset="UTF-8" />
+	<title>MUSICULTURE</title>
+	<link rel="stylesheet" href="frontend/css/style.css" />
 
-  <!-- Librerías externas -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
-  <script src="https://d3js.org/d3.v7.min.js"></script>
-  <script src="https://unpkg.com/ml5@1/dist/ml5.min.js"></script>
+	<!-- Librerías externas -->
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
+	<script src="https://d3js.org/d3.v7.min.js"></script>
+	<script src="https://unpkg.com/ml5@1/dist/ml5.min.js"></script>
 </head>
 
 <body>
-  <!-- El canvas de p5 se creará automáticamente con createCanvas(). -->
-  <!-- El globo de D3 se añadirá dentro de #globe-container. -->
-  <div id="globe-container"></div>
+	<!-- El canvas de p5 se creará automáticamente con createCanvas(). -->
+	<!-- El globo de D3 se añadirá dentro de #globe-container. -->
+	<div id="globe-container"></div>
 
-  <!-- Scripts del proyecto -->
-  <script src="frontend/js/wikidata.js"></script>
-  <script src="frontend/js/globe.js"></script>
-  <script src="frontend/js/gestureControl.js"></script>
-  <script src="frontend/js/sketch.js"></script>
+	<!-- Scripts del proyecto -->
+	<script src="frontend/js/wikidata.js"></script>
+	<script src="frontend/js/globe.js"></script>
+	<script src="frontend/js/gestureControl.js"></script>
+	<script src="frontend/js/sketch.js"></script>
 </body>
 </html>
