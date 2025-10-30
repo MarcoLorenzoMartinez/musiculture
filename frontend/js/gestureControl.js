@@ -22,13 +22,16 @@ const camMargin = 20;
 let lastNoseY = null;
 let nodCounter = 0;
 const NOD_THRESHOLD = 15; // sensibilidad del movimiento vertical
-const NOD_FRAMES = 10;		// número de frames para detectar un “asentir”
+const NOD_FRAMES = 10;		// número de frames para detectar un "asentir"
 
 function setupHandControl() {
 	// Crear captura de cámara
 	video = createCapture(VIDEO);
 	video.size(camW, camH);
 	video.hide();
+
+	// Detener rotación automática del globo
+	autoRotate = false;
 
 	// Inicializar modelo de manos
 	handPose = ml5.handPose(() => {
@@ -49,18 +52,44 @@ function setupHandControl() {
     }
     startFaceMesh();
 
-
 	console.log("🖐 Control por gestos + asentir activado (ml5)");
 
 	// Crear punto central en el SVG
 	createCenterMarker();
 }
 
+// === Función para limpiar el control de gestos ===
+function cleanupHandControl() {
+	// Eliminar el punto central del SVG
+	removeCenterMarker();
+	
+	// Detener los modelos si es necesario
+	if (handPose) {
+		handPose.detectStop();
+	}
+	
+	// Detener el video
+	if (video) {
+		video.stop();
+		video.remove();
+		video = null;
+	}
+	
+	// Resetear variables
+	hands = [];
+	faces = [];
+	lastX = null;
+	lastY = null;
+	lastNoseY = null;
+	nodCounter = 0;
+	gestureCooldown = 0;
+}
+
 // === Crear el punto central en el SVG (visible sobre el globo) ===
 function createCenterMarker() {
 	d3.select("#center-marker").remove(); // evitar duplicados
 
-	d3.select("svg")
+	d3.select("#globe")
 		.append("circle")
 		.attr("id", "center-marker")
 		.attr("cx", globeWidth / 2)
@@ -72,6 +101,11 @@ function createCenterMarker() {
 		.style("pointer-events", "none");
 }
 
+// === Eliminar el punto central del SVG ===
+function removeCenterMarker() {
+	d3.select("#center-marker").remove();
+	svg.selectAll(".center-dot").remove();
+}
 
 function gotHands(results) {
 	hands = results;
@@ -140,18 +174,32 @@ function drawCenterDot() {
 
 	// El grupo principal del globo (normalmente el primero dentro de <svg>)
 	const globeGroup = svg.select("g");
+	
+	// Si no existe un grupo, lo creamos en el SVG directamente
+	if (globeGroup.empty()) {
+		svg.append("circle")
+			.attr("class", "center-dot")
+			.attr("cx", globeWidth / 2)
+			.attr("cy", globeHeight / 2)
+			.attr("r", 6)
+			.style("fill", "red")
+			.style("stroke", "white")
+			.style("stroke-width", 2)
+			.style("pointer-events", "none");
+	} else {
+		// Calculamos el centro del globo (que es el centro de la proyección)
+		const [cx, cy] = projection([0, 0]); // centro geográfico del mapa (lat 0, lon 0)
 
-	// Calculamos el centro del globo (que es el centro de la proyección)
-	const [cx, cy] = projection([0, 0]); // centro geográfico del mapa (lat 0, lon 0)
-
-	globeGroup.append("circle")
-		.attr("class", "center-dot")
-		.attr("cx", 0)	// el grupo ya está trasladado al centro
-		.attr("cy", 0)
-		.attr("r", 6)
-		.style("fill", "red")
-		.style("stroke", "white")
-		.style("stroke-width", 2);
+		globeGroup.append("circle")
+			.attr("class", "center-dot")
+			.attr("cx", 0)	// el grupo ya está trasladado al centro
+			.attr("cy", 0)
+			.attr("r", 6)
+			.style("fill", "red")
+			.style("stroke", "white")
+			.style("stroke-width", 2)
+			.style("pointer-events", "none");
+	}
 }
 
 function drawHandsOverlay(xPos, yPos, w, h) {
@@ -227,19 +275,18 @@ function detectNodGesture() {
 	lastNoseY = noseY;
 
 	if (gestureCooldown > 0) gestureCooldown--;
-		console.log("Asentir detectado");
 }
 
 // === Detectar tecla 'C' para clic central (debug) ===
 function keyPressed() {
-  if (key === 'C') {
+  if (key === 'C' || key === 'c') {
     performCenterClick();
   }
 }
 
 // === Ejecutar clic central ===
 function performCenterClick() {
-		console.log("👉 Clic central ejecutado");
+	console.log("👉 Clic central ejecutado");
 	const coords = projection.invert([globeWidth / 2, globeHeight / 2]);
 	const allCountries = d3.selectAll(".country").data();
 
@@ -251,9 +298,9 @@ function performCenterClick() {
 		console.log("✅ Asentir detectado →", centeredCountry.properties.name);
 
 		// Visual feedback
-		d3.selectAll(".country").classed("country-selected", false);
-		d3.select(`[data-name='${centeredCountry.properties.name}']`)
-			.classed("country-selected", true);
+		d3.selectAll(".country").classed("country-selected", d =>
+			d.properties.name === centeredCountry.properties.name
+		);
 
 		getWikidataId(centeredCountry.properties.name).then(id => {
 			if (id) loadMusicForCountry(id, centeredCountry.properties.name);
@@ -273,7 +320,6 @@ function performCenterClick() {
 		console.log("🤷‍♂️ Asentir detectado pero ningún país centrado");
 	}
 }
-
 
 // === Obtener país centrado en el globo ===
 function getCountryAtCenter() {

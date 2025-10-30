@@ -41,11 +41,15 @@ function setup() {
 	gestureButton.position(20, menuHeight + 10);
 	gestureButton.mousePressed(() => {
 		handControlActive = !handControlActive;
-		if (handControlActive) setupHandControl();
+		if (handControlActive) {
+			setupHandControl();
+			autoRotate = false; // Detener rotación al activar
+		} else {
+			autoRotate = true;  // Reanudar rotación al desactivar
+			removeCenterMarker(); // Quitar marcador central
+		}
 		gestureButton.html(handControlActive ? "🚫 Desactivar control por manos" : "🖐 Activar control por manos");
 	});
-
-
 }
 
 function draw() {
