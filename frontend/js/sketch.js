@@ -30,14 +30,14 @@ function setup() {
 		const wikidataId = await getWikidataId(countryName);
 		if (wikidataId) {
 			loadMusicForCountry(wikidataId, countryName);
-			console.log(`🌍 ${countryName} → ${wikidataId}`);
+			console.log(`🌍 ${countryName} -> ${wikidataId}`);
 		} else {
 			console.log("No se encontró el ID de Wikidata para el país:", countryName);
 		}
 	});
 
 	// Botón para activar modo de control manual
-	let gestureButton = createButton("🖐 Activar control por manos");
+	let gestureButton = createButton("Activar control por manos");
 	gestureButton.position(20, menuHeight + 10);
 	gestureButton.mousePressed(() => {
 		handControlActive = !handControlActive;
@@ -219,7 +219,7 @@ async function nextSong(countryName = currentSongInfo?.country) {
 }
 
 function previousSong() {
-	console.log("⏮️ (En una futura versión podríamos almacenar el historial y volver atrás)");
+	console.log("(En una futura versión podríamos almacenar el historial y volver atrás)");
 }
 
 function togglePlay() {
