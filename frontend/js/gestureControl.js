@@ -37,15 +37,18 @@ function setupHandControl() {
 	});
 
 	// Inicializar modelo de rostro
-	async function startFaceMesh() {
-		if (!faceMesh || !video) return;
-		while (true) {
-				const predictions = await faceMesh.detect(video);
-				faceMeshResults = predictions;
-				await new Promise(r => setTimeout(r, 100)); // 10 fps aprox
-		}
-}
-startFaceMesh();
+    async function startFaceMesh() {
+        faceMesh = await ml5.faceMesh(video);
+        console.log("😀 Modelo faceMesh cargado");
+
+        while (true) {
+            const predictions = await faceMesh.detect(video);
+            faces = predictions;
+            await new Promise(r => setTimeout(r, 100)); // ~10 FPS
+        }
+    }
+    startFaceMesh();
+
 
 	console.log("🖐 Control por gestos + asentir activado (ml5)");
 
@@ -227,6 +230,13 @@ function detectNodGesture() {
 		console.log("Asentir detectado");
 }
 
+// === Detectar tecla 'C' para clic central (debug) ===
+function keyPressed() {
+  if (key === 'C') {
+    performCenterClick();
+  }
+}
+
 // === Ejecutar clic central ===
 function performCenterClick() {
 		console.log("👉 Clic central ejecutado");
@@ -267,6 +277,7 @@ function performCenterClick() {
 
 // === Obtener país centrado en el globo ===
 function getCountryAtCenter() {
+    console.log("Obteniendo país centrado en el globo...");
 	const coords = projection.invert([globeWidth / 2, globeHeight / 2]);
 	const country = d3.selectAll(".country").data().find(d =>
 		d3.geoContains(d, coords)
