@@ -220,30 +220,48 @@ function drawHandsOverlay(xPos, yPos, w, h) {
 	pop();
 }
 
-// === Ambas manos controlan la rotación ===
+// === La mano derecha controla la rotación, la mano izquierda el click ===
 function processHandGesture() {
 	if (hands.length === 0) return;
+	// Buscar el índice de la mano derecha para mover el globo (están invertidas por el espejo)
+	const rightHand = hands.find(h => h.handedness === "Left");
+	//const hand = hands.find(h => h.index_finger_tip);
+	//if (!hand) return;
+	//const x = map(hand.index_finger_tip.x, 0, video.width, windowWidth, 0);
+	//const y = map(hand.index_finger_tip.y, 0, video.height, 0, windowHeight);
+	if (rightHand && rightHand.index_finger_tip) {
+		const x = map(rightHand.index_finger_tip.x, 0, video.width, windowWidth, 0);
+		const y = map(rightHand.index_finger_tip.y, 0, video.height, 0, windowHeight);
 
-	// Buscar cualquier mano con el dedo índice visible
-	const hand = hands.find(h => h.index_finger_tip);
-	if (!hand) return;
+		if (lastX !== null && lastY !== null) {
+			const dx = x - lastX;
+			const dy = y - lastY;
 
-	const x = map(hand.index_finger_tip.x, 0, video.width, windowWidth, 0);
-	const y = map(hand.index_finger_tip.y, 0, video.height, 0, windowHeight);
+			rotation[0] += dx * 0.5;
+			rotation[1] -= dy * 0.3;
+			rotation[1] = Math.max(-90, Math.min(90, rotation[1]));
+			projection.rotate(rotation);
+			svg.selectAll("path").attr("d", path);
+		}
 
-	if (lastX !== null && lastY !== null) {
-		const dx = x - lastX;
-		const dy = y - lastY;
-
-		rotation[0] += dx * 0.5;
-		rotation[1] -= dy * 0.3;
-		rotation[1] = Math.max(-90, Math.min(90, rotation[1]));
-		projection.rotate(rotation);
-		svg.selectAll("path").attr("d", path);
+		lastX = x;
+		lastY = y;
 	}
+	// === Detectar gesto de puño (clic central) ===
+	const leftHand = hands.find(h => h.handedness === "Right");
+	if (leftHand && leftHand.index_finger_tip && leftHand.thumb_tip) {
+		const distance = dist(
+			leftHand.index_finger_tip.x, leftHand.index_finger_tip.y,
+			leftHand.thumb_tip.x, leftHand.thumb_tip.y
+		);
 
-	lastX = x;
-	lastY = y;
+		// Si la distancia entre pulgar e índice es pequeña, asumimos que es un puño → clic
+		if (distance < 30 && gestureCooldown === 0) {
+			performCenterClick();
+			gestureCooldown = 60; // cooldown para no disparar múltiples clics
+		}
+	}
+	if (gestureCooldown > 0) gestureCooldown--;
 }
 
 // === Detectar gesto de asentir (clic central) ===
