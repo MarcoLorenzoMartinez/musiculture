@@ -11,6 +11,8 @@ let currentSongInfo = null;
 let playlistArtists = [];
 let isPlaying = false;
 let albumArt = null; // Imagen de portada actual
+let controlCooldown = false;
+const COOLDOWN_TIME = 200; // tiempo en ms (0.2s)
 
 function preload() {
 	logoImg = loadImage("frontend/assets/completo_sinFondo.png");
@@ -132,11 +134,17 @@ function drawIcon(symbol, x, y, size, onClick) {
 	fill(255);
 	text(symbol, x, y);
 
-	// Detección de clic manual
-	if (mouseIsPressed) {
+	// Detección de clic manual con cooldown
+	if (mouseIsPressed && !controlCooldown) {
 		const d = dist(mouseX, mouseY, x, y);
 		if (d < size / 1.2) {
+			controlCooldown = true;
 			onClick();
+
+			// Restablece el cooldown tras un tiempo
+			setTimeout(() => {
+				controlCooldown = false;
+			}, COOLDOWN_TIME);
 		}
 	}
 }
