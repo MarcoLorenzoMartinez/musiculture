@@ -91,41 +91,73 @@ function draw() {
 }
 
 function drawPlayerBar() {
-	fill("#2E7D32");
+	fill("#2E7D32"); // Verde original
 	rect(0, height - playerHeight, width, playerHeight);
 
 	if (!currentSongInfo) return;
 
-	const yBase = height - playerHeight / 2;
-	const padding = 25;
+	const centerY = height - playerHeight / 2;
+	const centerX = width / 2;
 
-	// Portada
-	if (albumArt) {
-		image(albumArt, padding, height - playerHeight + 10, 80, 80);
-	} else {
+	// === Botones principales ===
+	const iconSize = 28;
+	const spacing = 70;
+
+	drawIcon("⏮", centerX - spacing, centerY - 5, iconSize, () => previousSong());
+	drawIcon(isPlaying ? "⏸" : "▶", centerX, centerY - 5, iconSize + 4, () => togglePlay());
+	drawIcon("⏭", centerX + spacing, centerY - 5, iconSize, () => nextSong());
+
+	// === Barra de progreso interactiva ===
+	if (currentAudio && currentAudio.elt.duration) {
+		const progressWidth = width * 0.45; // Más corta
+		const barX = width / 2 - progressWidth / 2;
+		const barY = height - 28;
+		const barHeight = 6;
+
+		const duration = currentAudio.elt.duration;
+		const currentTime = currentAudio.elt.currentTime;
+		const progress = map(currentTime, 0, duration, 0, progressWidth);
+
+		// Fondo
 		fill(255, 40);
-		rect(padding, height - playerHeight + 10, 80, 80, 8);
+		rect(barX, barY, progressWidth, barHeight, 3);
+
+		// Progreso verde claro
+		fill("#A5D6A7");
+		rect(barX, barY, progress, barHeight, 3);
+
+		// Detectar clic en la barra
+		if (mouseIsPressed && mouseY > barY - 5 && mouseY < barY + barHeight + 5 &&
+				mouseX > barX && mouseX < barX + progressWidth) {
+			const clickPos = constrain(mouseX - barX, 0, progressWidth);
+			const newTime = map(clickPos, 0, progressWidth, 0, duration);
+			currentAudio.elt.currentTime = newTime;
+		}
+
+		// Tiempos (inicio / fin)
+		fill(255);
+		textSize(12);
+		textAlign(LEFT, CENTER);
+		text(formatTime(currentTime), barX - 35, barY + barHeight / 2);
+		textAlign(RIGHT, CENTER);
+		text(formatTime(duration), barX + progressWidth + 35, barY + barHeight / 2);
 	}
 
-	// Texto (canción + artista)
+	// === Info canción ===
+	const padding = 25;
+	if (albumArt) {
+		image(albumArt, padding, height - playerHeight + 10, 80, 80);
+	}
+
 	fill(255);
 	textAlign(LEFT, CENTER);
-	textSize(16);
-	textFont("Arial, sans-serif");
-	text(currentSongInfo.track, padding + 100, yBase - 10);
+	textSize(18);
+	textStyle(BOLD);
+	text(currentSongInfo.track, padding + 100, centerY - 10);
 	textSize(14);
+	textStyle(NORMAL);
 	fill(230);
-	text(currentSongInfo.artist, padding + 100, yBase + 12);
-
-	// Botones
-	const buttonY = yBase;
-	const iconSize = 28;
-	const spacing = 60;
-	const centerX = width - 150;
-
-	drawIcon("⏮️", centerX - spacing, buttonY, iconSize, () => previousSong());
-	drawIcon(isPlaying ? "⏸️" : "▶️", centerX, buttonY, iconSize, () => togglePlay());
-	drawIcon("⏭️", centerX + spacing, buttonY, iconSize, () => nextSong());
+	text(currentSongInfo.artist, padding + 100, centerY + 14);
 }
 
 function drawIcon(symbol, x, y, size, onClick) {
@@ -134,19 +166,22 @@ function drawIcon(symbol, x, y, size, onClick) {
 	fill(255);
 	text(symbol, x, y);
 
-	// Detección de clic manual con cooldown
+	// Detección de clic con cooldown
 	if (mouseIsPressed && !controlCooldown) {
 		const d = dist(mouseX, mouseY, x, y);
-		if (d < size / 1.2) {
+		if (d < size) {
 			controlCooldown = true;
 			onClick();
-
-			// Restablece el cooldown tras un tiempo
-			setTimeout(() => {
-				controlCooldown = false;
-			}, COOLDOWN_TIME);
+			setTimeout(() => (controlCooldown = false), COOLDOWN_TIME);
 		}
 	}
+}
+
+function formatTime(seconds) {
+	if (isNaN(seconds)) return "0:00";
+	const m = Math.floor(seconds / 60);
+	const s = Math.floor(seconds % 60);
+	return `${m}:${s < 10 ? "0" : ""}${s}`;
 }
 
 function windowResized() {

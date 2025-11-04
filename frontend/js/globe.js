@@ -38,12 +38,39 @@ function initGlobe(onCountryClick) {
 	// Mapa mundial
 	d3.json("https://raw.githubusercontent.com/holtzy/D3-graph-gallery/master/DATA/world.geojson")
 		.then(data => {
+			// === Tooltip (indicador de país) ===
+			const tooltip = d3.select("body")
+				.append("div")
+				.attr("class", "country-tooltip")
+				.style("position", "absolute")
+				.style("background", "rgba(0, 0, 0, 0.75)")
+				.style("color", "#fff")
+				.style("padding", "6px 10px")
+				.style("border-radius", "6px")
+				.style("font-size", "14px")
+				.style("font-family", "Arial, sans-serif")
+				.style("pointer-events", "none")
+				.style("opacity", 0);
+
 			svg.selectAll("path")
 				.data(data.features)
 				.enter()
 				.append("path")
 				.attr("d", path)
 				.attr("class", "country")
+				.on("mouseover", (event, d) => {
+					tooltip.transition().duration(150).style("opacity", 1);
+					tooltip.html(d.properties.name);
+					d3.select(event.currentTarget).attr("fill", "#81C784"); // iluminar país
+				})
+				.on("mousemove", (event) => {
+					tooltip.style("left", event.pageX + 12 + "px")
+								.style("top", event.pageY - 20 + "px");
+				})
+				.on("mouseout", (event) => {
+					tooltip.transition().duration(200).style("opacity", 0);
+					d3.select(event.currentTarget).attr("fill", null);
+				})
 				.on("click", (event, d) => {
 					// Desmarcar país anterior
 					svg.selectAll(".country").classed("country-selected", false);
