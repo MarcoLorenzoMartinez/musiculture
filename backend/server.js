@@ -2,6 +2,12 @@
 import express from "express";
 import fetch from "node-fetch";
 import cors from "cors";
+import fs from "fs";
+import path from "path";
+import fetch from "node-fetch";
+
+const FLAG_CACHE_PATH = path.resolve("./flagsCache.json");
+const FLAG_CACHE_TTL = 1000 * 60 * 60 * 24 * 30; // 30 días
 
 const app = express();
 app.use(cors());
@@ -56,6 +62,51 @@ app.get("/music/:wikidataId", async (req, res) => {
 		console.error("Error obteniendo artistas:", error);
 		res.status(500).json({ error: "Error interno del servidor" });
 	}
+});
+
+async function getFlagsFromWikidata() {
+	const query = `
+	SELECT ?country ?countryLabel ?flag WHERE {
+		?country wdt:P31 wd:Q6256;       # instancia de país
+		         wdt:P41 ?flag.          # imagen de bandera
+		SERVICE wikibase:label { bd:serviceParam wikibase:language "es,en". }
+	}`;
+	const url = "https://query.wikidata.org/sparql?format=json&query=" + encodeURIComponent(query);
+	const res = await fetch(url);
+	const data = await res.json();
+
+	const flags = {};
+	for (const item of data.results.bindings) {
+		flags[item.countryLabel.value] = item.flag.value;
+	}
+	return flags;
+}
+
+async function loadFlagCache() {
+	let cacheValid = false;
+	if (fs.existsSync(FLAG_CACHE_PATH)) {
+		const stats = fs.statSync(FLAG_CACHE_PATH);
+		const age = Date.now() - stats.mtimeMs;
+		cacheValid = age < FLAG_CACHE_TTL;
+	}
+
+	if (cacheValid) {
+		console.log("✅ Usando caché de banderas local");
+		return JSON.parse(fs.readFileSync(FLAG_CACHE_PATH, "utf8"));
+	} else {
+		console.log("🌐 Descargando banderas desde Wikidata...");
+		const flags = await getFlagsFromWikidata();
+		fs.writeFileSync(FLAG_CACHE_PATH, JSON.stringify(flags, null, 2));
+		return flags;
+	}
+}
+
+let flagCache = {};
+loadFlagCache().then(f => (flagCache = f));
+
+// Endpoint para obtener las banderas
+app.get("/flags", (req, res) => {
+	res.json(flagCache);
 });
 
 // --- Configuración para Render ---
