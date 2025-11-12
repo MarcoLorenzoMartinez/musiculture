@@ -6,20 +6,7 @@ let projection, path, svg, globe;
 let currentScale, rotation, autoRotate, velocity;
 let globeWidth, globeHeight;
 let selectedCountry = null;
-let countryFlags = {};
 
-async function loadCountryFlags() {
-	try {
-		const res = await fetch("https://musiculture-backend.onrender.com/flags");
-		countryFlags = await res.json();
-	} catch (e) {
-		console.error("Error cargando banderas:", e);
-	}
-}
-
-loadCountryFlags();
-
-// === Inicialización del globo ===
 function initGlobe(onCountryClick) {
 	const container = document.getElementById("globe-container");
 	globeWidth = container.offsetWidth;
@@ -72,24 +59,10 @@ function initGlobe(onCountryClick) {
 				.attr("d", path)
 				.attr("class", "country")
 				.on("mouseover", (event, d) => {
-					const countryName = d.properties.name;
-					const flagUrl = countryFlags[countryName];
 					tooltip.transition().duration(150).style("opacity", 1);
-
-					if (flagUrl) {
-						tooltip.html(`
-							<div style="display:flex;align-items:center;gap:8px;">
-								<span>${countryName}</span>
-								<img src="${flagUrl}" width="24" height="16" style="border:1px solid #ccc;border-radius:2px;">
-							</div>
-						`);
-					} else {
-						tooltip.html(countryName);
-					}
-
-					d3.select(event.currentTarget).attr("fill", "#81C784");
+					tooltip.html(d.properties.name);
+					d3.select(event.currentTarget).attr("fill", "#81C784"); // iluminar país
 				})
-
 				.on("mousemove", (event) => {
 					tooltip.style("left", event.pageX + 12 + "px")
 								.style("top", event.pageY - 20 + "px");
