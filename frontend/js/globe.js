@@ -59,9 +59,21 @@ function initGlobe(onCountryClick) {
 				.attr("d", path)
 				.attr("class", "country")
 				.on("mouseover", (event, d) => {
-					tooltip.transition().duration(150).style("opacity", 1);
-					tooltip.html(d.properties.name);
-					d3.select(event.currentTarget).attr("fill", "#81C784"); // iluminar país
+				tooltip.transition().duration(150).style("opacity", 1);
+
+				const countryName = d.properties.name;
+				const isoCode = iso3to2(d.id);
+				const flagUrl = `https://flagcdn.com/w40/${isoCode}.png`;
+
+				tooltip.html(`
+					<div style="display:flex;align-items:center;gap:8px;">
+					<strong>${countryName}</strong>
+					<img src="${flagUrl}" alt="Bandera de ${countryName}" width="32" height="20"
+						style="border:1px solid #555; border-radius:3px;" />
+					</div>
+				`);
+
+				d3.select(event.currentTarget).attr("fill", "#81C784");
 				})
 				.on("mousemove", (event) => {
 					tooltip.style("left", event.pageX + 12 + "px")
@@ -88,6 +100,30 @@ function initGlobe(onCountryClick) {
 
 	addInteraction();
 }
+
+// Conversión de código ISO3 (geojson) → ISO2 (FlagCDN)
+function iso3to2(iso3) {
+  const map = {
+    AFG: "af", ALB: "al", DZA: "dz", AND: "ad", AGO: "ao", ARG: "ar", ARM: "am", AUS: "au",
+    AUT: "at", AZE: "az", BHS: "bs", BHR: "bh", BGD: "bd", BRB: "bb", BEL: "be", BEN: "bj",
+    BTN: "bt", BOL: "bo", BIH: "ba", BRA: "br", BGR: "bg", BFA: "bf", BDI: "bi", KHM: "kh",
+    CMR: "cm", CAN: "ca", CHL: "cl", CHN: "cn", COL: "co", COG: "cg", CRI: "cr", HRV: "hr",
+    CUB: "cu", CYP: "cy", CZE: "cz", DNK: "dk", DOM: "do", ECU: "ec", EGY: "eg", SLV: "sv",
+    EST: "ee", ETH: "et", FIN: "fi", FRA: "fr", DEU: "de", GRC: "gr", GTM: "gt", HND: "hn",
+    HUN: "hu", ISL: "is", IND: "in", IDN: "id", IRN: "ir", IRQ: "iq", IRL: "ie", ISR: "il",
+    ITA: "it", JAM: "jm", JPN: "jp", JOR: "jo", KAZ: "kz", KEN: "ke", KOR: "kr", KWT: "kw",
+    LVA: "lv", LBN: "lb", LBR: "lr", LBY: "ly", LIE: "li", LTU: "lt", LUX: "lu", MDG: "mg",
+    MYS: "my", MLI: "ml", MLT: "mt", MEX: "mx", MDA: "md", MCO: "mc", MNG: "mn", MNE: "me",
+    MAR: "ma", MOZ: "mz", MMR: "mm", NAM: "na", NPL: "np", NLD: "nl", NZL: "nz", NIC: "ni",
+    NER: "ne", NGA: "ng", MKD: "mk", NOR: "no", OMN: "om", PAK: "pk", PAN: "pa", PRY: "py",
+    PER: "pe", PHL: "ph", POL: "pl", PRT: "pt", QAT: "qa", ROU: "ro", RUS: "ru", SAU: "sa",
+    SEN: "sn", SRB: "rs", SGP: "sg", SVK: "sk", SVN: "si", ZAF: "za", ESP: "es", SWE: "se",
+    CHE: "ch", SYR: "sy", TWN: "tw", THA: "th", TUN: "tn", TUR: "tr", UKR: "ua", ARE: "ae",
+    GBR: "gb", USA: "us", URY: "uy", VEN: "ve", VNM: "vn", ZMB: "zm", ZWE: "zw"
+  };
+  return map[iso3] || iso3?.substring(0, 2).toLowerCase();
+}
+
 
 function startAutoRotation() {
 	d3.timer(() => {
