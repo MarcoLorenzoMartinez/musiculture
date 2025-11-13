@@ -59,9 +59,22 @@ function initGlobe(onCountryClick) {
 				.attr("d", path)
 				.attr("class", "country")
 				.on("mouseover", (event, d) => {
-					tooltip.transition().duration(150).style("opacity", 1);
-					tooltip.html(d.properties.name);
-					d3.select(event.currentTarget).attr("fill", "#81C784"); // iluminar país
+				tooltip.transition().duration(150).style("opacity", 1);
+
+				const countryName = d.properties.name;
+				const isoCode = iso3to2(d.id);
+				const flagUrl = `https://flagcdn.com/w40/${isoCode}.png`;
+
+				tooltip.html(`
+					<div style="display:flex;align-items:center;gap:8px;">
+					<strong>${countryName}</strong>
+					<img src="${flagUrl}" alt="Bandera de ${countryName}" width="32" height="20"
+						style="border:1px solid #555; border-radius:3px;" 
+						onerror="this.style.display='none'" />
+					</div>
+				`);
+
+				d3.select(event.currentTarget).attr("fill", "#81C784");
 				})
 				.on("mousemove", (event) => {
 					tooltip.style("left", event.pageX + 12 + "px")
@@ -87,6 +100,44 @@ function initGlobe(onCountryClick) {
 		});
 
 	addInteraction();
+}
+
+// Conversión completa de código ISO3 -> ISO2 (compatible con GeoJSON + FlagCDN)
+function iso3to2(iso3) {
+  const map = {
+    AFG: "af", ALA: "ax", ALB: "al", DZA: "dz", ASM: "as", AND: "ad", AGO: "ao", AIA: "ai",
+    ATA: "aq", ATG: "ag", ARG: "ar", ARM: "am", ABW: "aw", AUS: "au", AUT: "at", AZE: "az",
+    BHS: "bs", BHR: "bh", BGD: "bd", BRB: "bb", BLR: "by", BEL: "be", BLZ: "bz", BEN: "bj",
+    BMU: "bm", BTN: "bt", BOL: "bo", BES: "bq", BIH: "ba", BWA: "bw", BVT: "bv", BRA: "br",
+    IOT: "io", BRN: "bn", BGR: "bg", BFA: "bf", BDI: "bi", CPV: "cv", KHM: "kh", CMR: "cm",
+    CAN: "ca", CYM: "ky", CAF: "cf", TCD: "td", CHL: "cl", CHN: "cn", CXR: "cx", CCK: "cc",
+    COL: "co", COM: "km", COG: "cg", COD: "cd", COK: "ck", CRI: "cr", CIV: "ci", HRV: "hr",
+    CUB: "cu", CUW: "cw", CYP: "cy", CZE: "cz", DNK: "dk", DJI: "dj", DMA: "dm", DOM: "do",
+    ECU: "ec", EGY: "eg", SLV: "sv", GNQ: "gq", ERI: "er", EST: "ee", SWZ: "sz", ETH: "et",
+    FLK: "fk", FRO: "fo", FJI: "fj", FIN: "fi", FRA: "fr", GUF: "gf", PYF: "pf", ATF: "tf",
+    GAB: "ga", GMB: "gm", GEO: "ge", DEU: "de", GHA: "gh", GIB: "gi", GRC: "gr", GRL: "gl",
+    GRD: "gd", GLP: "gp", GUM: "gu", GTM: "gt", GGY: "gg", GIN: "gn", GNB: "gw", GUY: "gy",
+    HTI: "ht", HMD: "hm", VAT: "va", HND: "hn", HKG: "hk", HUN: "hu", ISL: "is", IND: "in",
+    IDN: "id", IRN: "ir", IRQ: "iq", IRL: "ie", IMN: "im", ISR: "il", ITA: "it", JAM: "jm",
+    JPN: "jp", JEY: "je", JOR: "jo", KAZ: "kz", KEN: "ke", KIR: "ki", PRK: "kp", KOR: "kr",
+    KWT: "kw", KGZ: "kg", LAO: "la", LVA: "lv", LBN: "lb", LSO: "ls", LBR: "lr", LBY: "ly",
+    LIE: "li", LTU: "lt", LUX: "lu", MAC: "mo", MDG: "mg", MWI: "mw", MYS: "my", MDV: "mv",
+    MLI: "ml", MLT: "mt", MHL: "mh", MTQ: "mq", MRT: "mr", MUS: "mu", MYT: "yt", MEX: "mx",
+    FSM: "fm", MDA: "md", MCO: "mc", MNG: "mn", MNE: "me", MSR: "ms", MAR: "ma", MOZ: "mz",
+    MMR: "mm", NAM: "na", NRU: "nr", NPL: "np", NLD: "nl", NCL: "nc", NZL: "nz", NIC: "ni",
+    NER: "ne", NGA: "ng", NIU: "nu", NFK: "nf", MKD: "mk", MNP: "mp", NOR: "no", OMN: "om",
+    PAK: "pk", PLW: "pw", PSE: "ps", PAN: "pa", PNG: "pg", PRY: "py", PER: "pe", PHL: "ph",
+    PCN: "pn", POL: "pl", PRT: "pt", PRI: "pr", QAT: "qa", REU: "re", ROU: "ro", RUS: "ru",
+    RWA: "rw", BLM: "bl", SHN: "sh", KNA: "kn", LCA: "lc", MAF: "mf", SPM: "pm", VCT: "vc",
+    WSM: "ws", SMR: "sm", STP: "st", SAU: "sa", SEN: "sn", SRB: "rs", SYC: "sc", SLE: "sl",
+    SGP: "sg", SXM: "sx", SVK: "sk", SVN: "si", SLB: "sb", SOM: "so", ZAF: "za", SGS: "gs",
+    SSD: "ss", ESP: "es", LKA: "lk", SDN: "sd", SUR: "sr", SJM: "sj", SWE: "se", CHE: "ch",
+    SYR: "sy", TWN: "tw", TJK: "tj", TZA: "tz", THA: "th", TLS: "tl", TGO: "tg", TKL: "tk",
+    TON: "to", TTO: "tt", TUN: "tn", TUR: "tr", TKM: "tm", TCA: "tc", TUV: "tv", UGA: "ug",
+    UKR: "ua", ARE: "ae", GBR: "gb", USA: "us", URY: "uy", UZB: "uz", VUT: "vu", VEN: "ve",
+    VNM: "vn", WLF: "wf", ESH: "eh", YEM: "ye", ZMB: "zm", ZWE: "zw"
+  };
+  return map[iso3] || iso3?.substring(0, 2).toLowerCase();
 }
 
 function startAutoRotation() {
