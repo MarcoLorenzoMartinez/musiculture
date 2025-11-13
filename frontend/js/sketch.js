@@ -194,75 +194,129 @@ function windowResized() {
 
 // === Lógica de reproducción ===
 
+let playlist = [];
+let currentIndex = 0;
+let loadingMore = false;
+
 async function loadMusicForCountry(wikidataId, countryName) {
+	console.log(`🎶 Cargando música para ${countryName} (${wikidataId})`);
 	const response = await fetch(`https://musiculture-backend.onrender.com/music/${wikidataId}`);
 	const data = await response.json();
-	console.log("🎵 Datos recibidos:", data);
 
 	if (!Array.isArray(data) || data.length === 0) {
-		console.log("No hay artistas disponibles para este país");
+		console.warn("No hay artistas disponibles para este país");
 		currentSongInfo = null;
 		playlistArtists = [];
+		playlist = [];
 		return;
 	}
 
 	playlistArtists = data;
-	nextSong(countryName);
+	currentIndex = 0;
+	playlist = [];
+
+	// Cargar 10 canciones iniciales
+	await fetchMoreSongs(countryName);
+	playCurrentSong();
 }
 
-async function nextSong(countryName = currentSongInfo?.country) {
-	if (!playlistArtists || playlistArtists.length === 0) return;
+async function fetchMoreSongs(countryName) {
+	if (loadingMore) return;
+	loadingMore = true;
 
-	const randomArtist = random(playlistArtists);
-	const searchUrl = `https://itunes.apple.com/lookup?id=${randomArtist.appleMusicId}&entity=song&limit=10`;
+	console.log("🎧 Precargando 10 canciones nuevas...");
+	const newSongs = [];
 
-	try {
-		const res = await fetch(searchUrl);
-		const artistData = await res.json();
-		const songs = artistData.results.filter(item => item.kind === "song");
+	while (newSongs.length < 10 && playlistArtists.length > 0) {
+		const randomArtist = random(playlistArtists);
+		const searchUrl = `https://itunes.apple.com/lookup?id=${randomArtist.appleMusicId}&entity=song&limit=10`;
 
-		if (songs.length === 0) return nextSong(countryName);
+		try {
+			const res = await fetch(searchUrl);
+			const artistData = await res.json();
+			const songs = artistData.results.filter(item => item.kind === "song");
+			if (songs.length === 0) continue;
 
-		const randomSong = random(songs);
-
-		// Limpiar audio anterior
-		if (currentAudio) {
-			currentAudio.stop();
-			currentAudio.remove();
+			const randomSong = random(songs);
+			newSongs.push({
+				artist: randomArtist.artist,
+				track: randomSong.trackName,
+				country: countryName,
+				previewUrl: randomSong.previewUrl,
+				artwork: randomSong.artworkUrl100 || null
+			});
+		} catch (err) {
+			console.warn("Error precargando artista:", err);
 		}
-		selectAll(".musicFrame").forEach(f => f.remove());
+	}
 
-		// Crear nuevo audio
-		currentAudio = createAudio(randomSong.previewUrl);
-		currentAudio.attribute("controls", false);
-		currentAudio.attribute("class", "musicFrame");
-		currentAudio.style("display", "none"); // oculto
-		currentAudio.parent(document.body);
+	playlist.push(...newSongs);
+	console.log(`✅ Playlist ampliada: ${playlist.length} canciones`);
+	loadingMore = false;
+}
 
-		currentSongInfo = {
-			artist: randomArtist.artist,
-			track: randomSong.trackName,
-			country: countryName
-		};
-		isPlaying = true;
+function playCurrentSong() {
+	if (playlist.length === 0) return;
 
-		// Cargar imagen de portada (si existe)
-		if (randomSong.artworkUrl100) {
-			loadImage(randomSong.artworkUrl100, img => albumArt = img);
-		} else {
-			albumArt = null;
-		}
+	const song = playlist[currentIndex];
+	console.log(`🎵 Reproduciendo: ${song.artist} — ${song.track}`);
 
-		currentAudio.play();
-		currentAudio.elt.addEventListener("ended", () => nextSong(countryName));
-	} catch (error) {
-		console.error(`Error cargando música de ${randomArtist.artist}:`, error);
-		await nextSong(countryName);
+	// Limpiar audio anterior
+	if (currentAudio) {
+		currentAudio.stop();
+		currentAudio.remove();
+	}
+
+	selectAll(".musicFrame").forEach(f => f.remove());
+
+	currentAudio = createAudio(song.previewUrl);
+	currentAudio.attribute("controls", false);
+	currentAudio.attribute("class", "musicFrame");
+	currentAudio.style("display", "none");
+	currentAudio.parent(document.body);
+
+	currentSongInfo = {
+		artist: song.artist,
+		track: song.track,
+		country: song.country
+	};
+	isPlaying = true;
+
+	if (song.artwork) {
+		loadImage(song.artwork, img => albumArt = img);
+	} else {
+		albumArt = null;
+	}
+
+	currentAudio.play();
+	currentAudio.elt.addEventListener("ended", () => nextSong());
+}
+
+async function nextSong() {
+	if (playlist.length === 0) return;
+
+	currentIndex++;
+	if (currentIndex >= playlist.length) {
+		console.log("🎶 Fin de lista, recargando más canciones...");
+		await fetchMoreSongs(currentSongInfo.country);
+		currentIndex = Math.min(currentIndex, playlist.length - 1);
+	}
+
+	playCurrentSong();
+
+	// Si quedan 2 canciones antes del final, precargar más
+	if (playlist.length - currentIndex <= 2) {
+		fetchMoreSongs(currentSongInfo.country);
 	}
 }
 
 function previousSong() {
-	console.log("(En una futura versión podríamos almacenar el historial y volver atrás)");
+	if (currentIndex > 0) {
+		currentIndex--;
+		playCurrentSong();
+	} else {
+		console.log("⏮ Ya estás en la primera canción");
+	}
 }
 
 function togglePlay() {
