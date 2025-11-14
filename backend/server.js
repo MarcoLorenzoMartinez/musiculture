@@ -51,7 +51,7 @@ app.get("/music/:wikidataId", async (req, res) => {
 		const shuffled = artists.sort(() => Math.random() - 0.5);
 
 		// Limitamos a unos 10 artistas para no saturar
-		res.json(shuffled.slice(0, 10));
+		res.json(shuffled);
 	} catch (error) {
 		console.error("Error obteniendo artistas:", error);
 		res.status(500).json({ error: "Error interno del servidor" });
