@@ -38,7 +38,7 @@ function initGlobe(onCountryClick) {
 	// Mapa mundial
 	d3.json("https://raw.githubusercontent.com/holtzy/D3-graph-gallery/master/DATA/world.geojson")
 		.then(data => {
-			// === Tooltip (indicador de país) ===
+			// Tooltip (indicador de país)
 			const tooltip = d3.select("body")
 				.append("div")
 				.attr("class", "country-tooltip")
@@ -182,7 +182,7 @@ function addInteraction() {
 	});
 }
 
-// === Ajuste dinámico del tamaño ===
+// Ajuste dinámico del tamaño
 function resizeGlobe(newWidth, newHeight) {
 	globeWidth = newWidth;
 	globeHeight = newHeight;

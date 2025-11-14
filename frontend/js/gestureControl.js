@@ -39,7 +39,7 @@ function setupHandControl() {
   createCenterMarker();
 }
 
-// === Función para limpiar el control de gestos ===
+// Limpiar el control de gestos
 function cleanupHandControl() {
   // Eliminar el punto central del SVG
   removeCenterMarker();
@@ -63,7 +63,7 @@ function cleanupHandControl() {
   gestureCooldown = 0;
 }
 
-// === Crear el punto central en el SVG (visible sobre el globo) ===
+// Crear el punto central en el SVG (visible sobre el globo)
 function createCenterMarker() {
   d3.select("#center-marker").remove(); // evitar duplicados
 
@@ -79,7 +79,7 @@ function createCenterMarker() {
     .style("pointer-events", "none");
 }
 
-// === Eliminar el punto central del SVG ===
+// Eliminar el punto central del SVG
 function removeCenterMarker() {
   d3.select("#center-marker").remove();
   svg.selectAll(".center-dot").remove();
@@ -138,7 +138,7 @@ function drawHandControl() {
   pop();
 }
 
-// === Dibuja un punto rojo en el centro del globo ===
+// Dibujar un punto rojo en el centro del globo
 function drawCenterDot() {
   // Eliminamos el punto anterior si existe
   svg.selectAll(".center-dot").remove();
@@ -185,7 +185,7 @@ function drawHandsOverlay(xPos, yPos, w, h) {
   pop();
 }
 
-// === La mano derecha controla la rotación, la izquierda el clic ===
+// La mano derecha controla la rotación, la izquierda el clic central
 function processHandGesture() {
   if (hands.length === 0) return;
 
@@ -228,14 +228,14 @@ function processHandGesture() {
   if (gestureCooldown > 0) gestureCooldown--;
 }
 
-// === Tecla 'C' para clic central ===
+// Tecla 'C' para clic central
 function keyPressed() {
   if (key === 'C' || key === 'c') {
     performCenterClick();
   }
 }
 
-// === Ejecutar clic central ===
+// Ejecutar clic central
 function performCenterClick() {
   console.log("Clic central ejecutado");
   const coords = projection.invert([globeWidth / 2, globeHeight / 2]);
