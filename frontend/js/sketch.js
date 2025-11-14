@@ -212,6 +212,9 @@ async function loadMusicForCountry(wikidataId, countryName) {
 	}
 
 	playlistArtists = data;
+	for (let artist of playlistArtists) {
+		console.log(`  🎤 Artista: ${artist.artist} (Apple Music ID: ${artist.appleMusicId})`)
+	};
 	currentIndex = 0;
 	playlist = [];
 
@@ -245,6 +248,8 @@ async function fetchMoreSongs(countryName) {
 				previewUrl: randomSong.previewUrl,
 				artwork: randomSong.artworkUrl100 || null
 			});
+
+			console.log(`  ➕ ${randomArtist.artist} — ${randomSong.trackName}`);
 		} catch (err) {
 			console.warn("Error precargando artista:", err);
 		}
