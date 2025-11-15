@@ -201,11 +201,22 @@ function windowResized() {
 }
 
 
-// Lógica de reproducción
+
+
+// ---------Lógica de reproducción---------
+
 let playlist = [];
 let currentIndex = 0;
-let loadingMore = false;
 
+// Motor de precarga optimizada
+let isFetching = false;
+let pendingFetch = false;
+
+const INITIAL_BATCH = 2;  // primeras canciones al cambiar de país
+const FETCH_BATCH = 5;    // cada recarga en background
+const MIN_LEFT = 4;        // cuando queden 4 -> recargar
+
+// Cargar música para un país dado su ID de Wikidata
 async function loadMusicForCountry(wikidataId, countryName) {
 	const response = await fetch(`https://musiculture-backend.onrender.com/music/${wikidataId}`);
 	const data = await response.json();
@@ -213,7 +224,6 @@ async function loadMusicForCountry(wikidataId, countryName) {
 	if (!Array.isArray(data) || data.length === 0) {
 		console.warn("No hay artistas disponibles para este país");
 		currentSongInfo = null;
-		playlistArtists = [];
 		playlist = [];
 		return;
 	}
@@ -222,18 +232,17 @@ async function loadMusicForCountry(wikidataId, countryName) {
 	currentIndex = 0;
 	playlist = [];
 
-	// Cargar 10 canciones iniciales
-	await fetchMoreSongs(countryName);
+	// Precargar canciones iniciales rápido
+	await fetchMoreSongs(countryName, INITIAL_BATCH);
 
-	// Obtener código ISO2 de la bandera
+	// Obtener la bandera
 	currentFlagISO = await getCountryFlag(countryName);
-
-	// Cargar la bandera una vez
-	flagImg = null; // limpiar anterior
+	flagImg = null;
 	if (currentFlagISO) {
 		const flagUrl = `https://flagcdn.com/w80/${currentFlagISO}.png`;
 		loadImage(flagUrl, img => flagImg = img);
 	}
+
 	playCurrentSong();
 }
 
@@ -252,45 +261,65 @@ async function getCountryFlag(countryName) {
 	return null;
 }
 
-async function fetchMoreSongs(countryName) {
-	if (loadingMore) return;
-	loadingMore = true;
-
-	const newSongs = [];
-
-	while (newSongs.length < 10 && playlistArtists.length > 0) {
-		const randomArtist = random(playlistArtists);
-		const searchUrl = `https://itunes.apple.com/lookup?id=${randomArtist.appleMusicId}&entity=song&limit=10`;
-
-		try {
-			const res = await fetch(searchUrl);
-			const artistData = await res.json();
-			const songs = artistData.results.filter(item => item.kind === "song");
-			if (songs.length === 0) continue;
-
-			const randomSong = random(songs);
-			newSongs.push({
-				artist: randomArtist.artist,
-				track: randomSong.trackName,
-				country: countryName,
-				previewUrl: randomSong.previewUrl,
-				artwork: randomSong.artworkUrl100 || null
-			});
-		} catch (err) {
-			console.warn("Error precargando artista:", err);
-		}
+async function fetchMoreSongs(countryName, batchSize = FETCH_BATCH) {
+	if (isFetching) {
+		pendingFetch = true;
+		return;
 	}
 
-	playlist.push(...newSongs);
-	loadingMore = false;
+	isFetching = true;
+
+	try {
+		const newSongs = [];
+
+		// Seguimos hasta llenar el batch
+		while (newSongs.length < batchSize && playlistArtists.length > 0) {
+			const randomArtist = random(playlistArtists);
+			const searchUrl = `https://itunes.apple.com/lookup?id=${randomArtist.appleMusicId}&entity=song&limit=10`;
+
+			try {
+				const res = await fetch(searchUrl);
+				const artistData = await res.json();
+				const songs = artistData.results.filter(item => item.kind === "song");
+				if (songs.length === 0) continue;
+
+				const randomSong = random(songs);
+
+				newSongs.push({
+					artist: randomArtist.artist,
+					track: randomSong.trackName,
+					country: countryName,
+					previewUrl: randomSong.previewUrl,
+					artwork: randomSong.artworkUrl100 || null,
+					id: randomSong.trackId // sirve para evitar duplicados futuros
+				});
+			} catch (err) {
+				console.warn("Error precargando artista:", err);
+			}
+		}
+
+		// Evitar duplicados
+		const existingIDs = new Set(playlist.map(s => s.id));
+		const filtered = newSongs.filter(s => !existingIDs.has(s.id));
+
+		playlist.push(...filtered);
+	} finally {
+		isFetching = false;
+
+		// Si mientras se hacía fetch, el usuario pasó rápido, volver a cargar
+		if (pendingFetch) {
+			pendingFetch = false;
+			await fetchMoreSongs(countryName, batchSize);
+		}
+	}
 }
 
+// Reproducir la canción actual en el índice
 function playCurrentSong() {
 	if (playlist.length === 0) return;
 
 	const song = playlist[currentIndex];
 
-	// Limpiar audio anterior
 	if (currentAudio) {
 		currentAudio.stop();
 		currentAudio.remove();
@@ -321,32 +350,37 @@ function playCurrentSong() {
 	currentAudio.elt.addEventListener("ended", () => nextSong());
 }
 
+// Reproducir siguiente canción
 async function nextSong() {
 	if (playlist.length === 0) return;
 
 	currentIndex++;
+
+	// Si llegamos al final y no hay todavía nuevas canciones,
+	// pedimos inmediatamente (sin bloquear)
 	if (currentIndex >= playlist.length) {
 		await fetchMoreSongs(currentSongInfo.country);
-		currentIndex = Math.min(currentIndex, playlist.length - 1);
+		currentIndex = playlist.length - 1;
 	}
 
 	playCurrentSong();
 
-	// Si quedan 2 canciones antes del final, precargar más
-	if (playlist.length - currentIndex <= 2) {
-		fetchMoreSongs(currentSongInfo.country);
+	// Precarga automática cuando queden pocas
+	const remaining = playlist.length - currentIndex;
+	if (remaining <= MIN_LEFT) {
+		fetchMoreSongs(currentSongInfo.country); // sin await, no bloquea
 	}
 }
 
+// Reproducir canción anterior
 function previousSong() {
 	if (currentIndex > 0) {
 		currentIndex--;
 		playCurrentSong();
-	} else {
-		console.log("⏮ Ya estás en la primera canción");
 	}
 }
 
+// Alternar reproducción/pausa
 function togglePlay() {
 	if (!currentAudio) return;
 	if (isPlaying) {
