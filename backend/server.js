@@ -16,16 +16,24 @@ app.use((req, res, next) => {
 // --- Utilidad para consultar Wikidata ---
 async function getArtistsByCountry(wikidataId) {
 	const query = `
-	SELECT ?artist ?artistLabel ?appleMusicArtistID WHERE {
-		VALUES ?country { wd:${wikidataId} }		 # País
-		VALUES ?occupation { wd:Q177220 }				# Ocupación: cantante
+	SELECT ?artist ?artistLabel ?appleMusicArtistID ?sitelinks WHERE {
+		VALUES ?country { wd:Q29 }         # País
+		VALUES ?occupation { wd:Q177220 }            # cantante
+
 		?artist wdt:P27 ?country;
-						wdt:P31 wd:Q5;									 # humano
-						wdt:P106 ?occupation;
-						wdt:P2850 ?appleMusicArtistID.	 # Apple Music ID
-		SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],en,es". }
-	}
-	LIMIT 200
+				wdt:P31 wd:Q5;                      # humano
+				wdt:P106 ?occupation;
+				wdt:P2850 ?appleMusicArtistID.
+
+		# Obtener número de sitelinks (idiomas con artículo)
+		?artist wikibase:sitelinks ?sitelinks.
+
+		SERVICE wikibase:label {
+			bd:serviceParam wikibase:language "[AUTO_LANGUAGE],en,es".
+		}
+		}
+		ORDER BY DESC(?sitelinks)
+		LIMIT 200
 	`;
 
 	const url = "https://query.wikidata.org/sparql?format=json&query=" + encodeURIComponent(query);
