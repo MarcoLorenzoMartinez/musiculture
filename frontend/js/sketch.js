@@ -231,6 +231,18 @@ const MIN_LEFT = 4;        // cuando queden 4 -> recargar
 
 // Cargar música para un país dado su ID de Wikidata
 async function loadMusicForCountry(wikidataId, countryName) {
+	// Detener y limpiar la reproducción actual
+	if (currentAudio) {
+		currentAudio.stop();
+		currentAudio.remove();
+		currentAudio = null;
+	}
+	selectAll(".musicFrame").forEach(f => f.remove());
+	currentSongInfo = null;
+	albumArt = null;
+	flagImg = null;
+	isPlaying = false;
+
 	const response = await fetch(`https://musiculture-backend.onrender.com/music/${wikidataId}`);
 	const data = await response.json();
 
