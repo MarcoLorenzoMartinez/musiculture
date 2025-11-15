@@ -43,7 +43,7 @@ async function getArtistsByCountry(wikidataId) {
 	return data.results.bindings.map(item => ({
 		artist: item.artistLabel.value,
 		appleMusicId: item.appleMusicArtistID.value
-	}));
+	})).filter(item => !/^Q\d+$/.test(item.artist));
 }
 
 // --- Endpoint principal ---
