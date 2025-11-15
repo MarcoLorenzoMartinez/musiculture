@@ -17,7 +17,7 @@ app.use((req, res, next) => {
 async function getArtistsByCountry(wikidataId) {
 	const query = `
 	SELECT ?artist ?artistLabel (SAMPLE(?appleID) AS ?appleMusicArtistID) ?sitelinks WHERE {
-			VALUES ?country { wd:{${wikidataId}} }         # País
+			VALUES ?country { wd:${wikidataId} }         # País
 			VALUES ?occupation { wd:Q177220 wd:Q488205 }            # cantante
 			?artist wdt:P27 ?country;
 					wdt:P31 wd:Q5;                      # humano
