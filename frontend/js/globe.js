@@ -69,7 +69,8 @@ function initGlobe(onCountryClick) {
 					<div style="display:flex;align-items:center;gap:8px;">
 					<strong>${countryName}</strong>
 					<img src="${flagUrl}" alt="Bandera de ${countryName}" width="32" height="20"
-						style="border:1px solid #555; border-radius:3px;" />
+						style="border:1px solid #555; border-radius:3px;" 
+						onerror="this.style.display='none'" />
 					</div>
 				`);
 
@@ -101,7 +102,7 @@ function initGlobe(onCountryClick) {
 	addInteraction();
 }
 
-// Conversión completa de código ISO3 → ISO2 (compatible con GeoJSON + FlagCDN)
+// Conversión completa de código ISO3 -> ISO2 (compatible con GeoJSON + FlagCDN)
 function iso3to2(iso3) {
   const map = {
     AFG: "af", ALA: "ax", ALB: "al", DZA: "dz", ASM: "as", AND: "ad", AGO: "ao", AIA: "ai",

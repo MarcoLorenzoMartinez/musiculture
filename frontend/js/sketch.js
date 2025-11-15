@@ -168,22 +168,35 @@ function drawPlayerBar() {
 	text(currentSongInfo.artist, padding + 100, centerY + 14);
 }
 
-function drawIcon(symbol, x, y, size, onClick) {
-	textAlign(CENTER, CENTER);
-	textSize(size);
-	fill(255);
-	text(symbol, x, y);
+function drawIcon(symbol, x, y, baseSize, onClick) {
+  const hover = dist(mouseX, mouseY, x, y) < baseSize * 0.8; // detectar hover
+  let iconSize = baseSize;
 
-	// Detección de clic con cooldown
-	if (mouseIsPressed && !controlCooldown) {
-		const d = dist(mouseX, mouseY, x, y);
-		if (d < size) {
-			controlCooldown = true;
-			onClick();
-			setTimeout(() => (controlCooldown = false), COOLDOWN_TIME);
-		}
-	}
+  // Efecto hover (aumenta un poco)
+  if (hover) {
+    iconSize = lerp(iconSize, baseSize * 1.2, 0.2);
+    fill("#A5D6A7"); // verde más claro
+  } else {
+    fill(255);
+  }
+
+  // Efecto de clic (encoge momentáneamente)
+  if (mouseIsPressed && hover) {
+    iconSize = baseSize * 0.85;
+  }
+
+  textAlign(CENTER, CENTER);
+  textSize(iconSize);
+  text(symbol, x, y);
+
+  // Clic con cooldown
+  if (mouseIsPressed && !controlCooldown && hover) {
+    controlCooldown = true;
+    onClick();
+    setTimeout(() => (controlCooldown = false), COOLDOWN_TIME);
+  }
 }
+
 
 function formatTime(seconds) {
 	if (isNaN(seconds)) return "0:00";
