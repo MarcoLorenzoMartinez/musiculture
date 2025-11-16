@@ -16,6 +16,10 @@ let currentFlagISO = null;
 let flagImg = null;
 const COOLDOWN_TIME = 200; // tiempo en ms (0.2s)
 
+// Favoritos
+let favorites = [];
+let isFavorite = false;
+
 function preload() {
 	logoImg = loadImage("frontend/assets/completo_sinFondo.png");
 }
@@ -23,6 +27,9 @@ function preload() {
 function setup() {
 	createCanvas(windowWidth, windowHeight);
 	noStroke();
+
+	// Cargar favoritos
+	loadFavorites();
 
 	// Crear contenedor para el globo entre las dos barras
 	const globeDiv = select("#globe-container");
@@ -48,7 +55,7 @@ function setup() {
 			setupHandControl();
 			autoRotate = false; // Detener rotación al activar
 		} else {
-			autoRotate = true;  // Reanudar rotación al desactivar
+			autoRotate = true;	// Reanudar rotación al desactivar
 			removeCenterMarker(); // Quitar marcador central
 		}
 		gestureButton.html(handControlActive ? "🚫 Desactivar control por manos" : "🖐 Activar control por manos");
@@ -95,6 +102,7 @@ function drawPlayerBar() {
 	drawIcon("⏮", centerX - spacing, centerY - 5, iconSize, () => previousSong());
 	drawIcon(isPlaying ? "⏸" : "▶", centerX, centerY - 5, iconSize + 4, () => togglePlay());
 	drawIcon("⏭", centerX + spacing, centerY - 5, iconSize, () => nextSong());
+	drawIcon(isFavorite ? "★" : "☆", width - 60, centerY - 5, iconSize, () => toggleFavorite());
 
 	// Barra de progreso interactiva
 	if (currentAudio && currentAudio.elt.duration) {
@@ -169,32 +177,32 @@ function drawPlayerBar() {
 }
 
 function drawIcon(symbol, x, y, baseSize, onClick) {
-  const hover = dist(mouseX, mouseY, x, y) < baseSize * 0.8; // detectar hover
-  let iconSize = baseSize;
+	const hover = dist(mouseX, mouseY, x, y) < baseSize * 0.8; // detectar hover
+	let iconSize = baseSize;
 
-  // Efecto hover (aumenta un poco)
-  if (hover) {
-    iconSize = lerp(iconSize, baseSize * 1.2, 0.2);
-    fill("#A5D6A7"); // verde más claro
-  } else {
-    fill(255);
-  }
+	// Efecto hover (aumenta un poco)
+	if (hover) {
+		iconSize = lerp(iconSize, baseSize * 1.2, 0.2);
+		fill("#A5D6A7"); // verde más claro
+	} else {
+		fill(255);
+	}
 
-  // Efecto de clic (encoge momentáneamente)
-  if (mouseIsPressed && hover) {
-    iconSize = baseSize * 0.85;
-  }
+	// Efecto de clic (encoge momentáneamente)
+	if (mouseIsPressed && hover) {
+		iconSize = baseSize * 0.85;
+	}
 
-  textAlign(CENTER, CENTER);
-  textSize(iconSize);
-  text(symbol, x, y);
+	textAlign(CENTER, CENTER);
+	textSize(iconSize);
+	text(symbol, x, y);
 
-  // Clic con cooldown
-  if (mouseIsPressed && !controlCooldown && hover) {
-    controlCooldown = true;
-    onClick();
-    setTimeout(() => (controlCooldown = false), COOLDOWN_TIME);
-  }
+	// Clic con cooldown
+	if (mouseIsPressed && !controlCooldown && hover) {
+		controlCooldown = true;
+		onClick();
+		setTimeout(() => (controlCooldown = false), COOLDOWN_TIME);
+	}
 }
 
 
@@ -225,12 +233,24 @@ let currentIndex = 0;
 let isFetching = false;
 let pendingFetch = false;
 
-const INITIAL_BATCH = 2;  // primeras canciones al cambiar de país
-const FETCH_BATCH = 5;    // cada recarga en background
-const MIN_LEFT = 4;        // cuando queden 4 -> recargar
+const INITIAL_BATCH = 2;	// primeras canciones al cambiar de país
+const FETCH_BATCH = 5;		// cada recarga en background
+const MIN_LEFT = 4;				// cuando queden 4 -> recargar
 
 // Cargar música para un país dado su ID de Wikidata
 async function loadMusicForCountry(wikidataId, countryName) {
+	// Detener y limpiar la reproducción actual
+	if (currentAudio) {
+		currentAudio.stop();
+		currentAudio.remove();
+		currentAudio = null;
+	}
+	selectAll(".musicFrame").forEach(f => f.remove());
+	currentSongInfo = null;
+	albumArt = null;
+	flagImg = null;
+	isPlaying = false;
+
 	const response = await fetch(`https://musiculture-backend.onrender.com/music/${wikidataId}`);
 	const data = await response.json();
 
@@ -351,6 +371,9 @@ function playCurrentSong() {
 		track: song.track,
 		country: song.country
 	};
+	// Comprobar si es favorita
+	isFavorite = favorites.some(f => f.id === song.id);
+	// Iniciar reproducción
 	isPlaying = true;
 
 	if (song.artwork) {
@@ -403,4 +426,41 @@ function togglePlay() {
 		currentAudio.play();
 		isPlaying = true;
 	}
+}
+
+// Favoritos
+function loadFavorites() {
+	const saved = localStorage.getItem("musiculture_favorites");
+	favorites = saved ? JSON.parse(saved) : [];
+}
+
+function saveFavorites() {
+	localStorage.setItem("musiculture_favorites", JSON.stringify(favorites));
+}
+
+function toggleFavorite() {
+	if (!currentAudio || !currentSongInfo) return;
+
+	const favObj = {
+		track: currentSongInfo.track,
+		artist: currentSongInfo.artist,
+		previewUrl: playlist[currentIndex].previewUrl,
+		artwork: playlist[currentIndex].artwork,
+		id: playlist[currentIndex].id
+	};
+
+	// ¿Ya existe?
+	const existing = favorites.find(f => f.id === favObj.id);
+
+	if (existing) {
+		// Eliminar
+		favorites = favorites.filter(f => f.id !== favObj.id);
+		isFavorite = false;
+	} else {
+		// Añadir
+		favorites.push(favObj);
+		isFavorite = true;
+	}
+
+	saveFavorites();
 }
