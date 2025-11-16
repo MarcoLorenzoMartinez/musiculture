@@ -3,6 +3,8 @@
 	 barra verde superior con logo, globo D3 y barra inferior tipo reproductor.
 */
 
+let mode = "normal"; // "normal" o "favorites"
+
 let menuHeight = 70; // Altura de la barra superior
 let playerHeight = 100; // Altura de la barra inferior
 let logoImg;
@@ -65,6 +67,23 @@ function setup() {
 function draw() {
 	background(20);
 
+	// Barra superior (menú)
+	drawMenuBar();
+
+	// Barra inferior (reproductor)
+	drawPlayerBar();
+
+	if (mode === "normal") {
+		// Control por gestos de la mano
+		drawHandControl();
+    } else if (mode === "favorites") {
+        drawFavoritesUI();
+    }
+
+
+}
+
+function drawMenuBar() {
 	// Barra superior
 	fill("#2E7D32");
 	rect(0, 0, width, menuHeight);
@@ -79,11 +98,19 @@ function draw() {
 	rect(x - 5, y - 5, logoWidth + 10, logoHeight + 10, 8);
 	image(logoImg, x, y, logoWidth, logoHeight);
 
-	// Barra inferior (reproductor)
-	drawPlayerBar();
+	// Icono de favoritos en la barra superior
+	const favIconSize = 40;
+	const favX = width - 60;
+	const favY = menuHeight / 2;
 
-	// Control por gestos de la mano
-	drawHandControl();
+	drawIcon("★", favX, favY, favIconSize, () => {
+		if (mode === "normal") {
+			mode = "favorites";
+			console.log("Canciones favoritas: ", favorites);
+		} else {
+			mode = "normal";
+		}
+	});
 }
 
 function drawPlayerBar() {
@@ -444,6 +471,8 @@ function toggleFavorite() {
 	const favObj = {
 		track: currentSongInfo.track,
 		artist: currentSongInfo.artist,
+		country: currentSongInfo.country,
+		flag: currentFlagISO,
 		previewUrl: playlist[currentIndex].previewUrl,
 		artwork: playlist[currentIndex].artwork,
 		id: playlist[currentIndex].id
