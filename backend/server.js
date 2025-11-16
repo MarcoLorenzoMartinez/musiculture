@@ -1,4 +1,6 @@
-// server.js
+/* server.js
+	Servidor Express para hacer consultas a APIs.
+*/
 import express from "express";
 import fetch from "node-fetch";
 import cors from "cors";
