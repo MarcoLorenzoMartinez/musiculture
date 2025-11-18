@@ -508,8 +508,13 @@ async function loadMusicForCountry(wikidataId, countryName) {
 async function getCountryFlag(countryName) {
 	const url = `https://restcountries.com/v3.1/name/${encodeURIComponent(countryName)}?fields=cca2`;
 	try {
+		console.log("Buscando ISO2 para", countryName);
 		const res = await fetch(url);
 		const data = await res.json();
+		// China devuelve "TW" en vez de "CN", manejar caso especial
+		if (countryName.toLowerCase() === "china") {
+			return "cn";
+		}
 		if (data && data[0] && data[0].cca2) {
 			return data[0].cca2.toLowerCase();
 		}
