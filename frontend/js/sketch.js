@@ -115,9 +115,9 @@ function drawMenuBar() {
 
 			// Ocultar globo
 			select("#globe-container").style("display", "none");
-			
-			// Limpiar selección de país 
-			selectedCountry = null;
+
+			// Limpiar selección de país
+			clearSelectedCountry();
 
 			// Detener audio actual
 			if (currentAudio) {
