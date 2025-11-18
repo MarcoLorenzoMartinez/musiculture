@@ -112,19 +112,40 @@ function drawMenuBar() {
 		if (mode === "normal") {
 			mode = "favorites";
 			favoritesScrollY = 0;
+
 			// Ocultar globo
 			select("#globe-container").style("display", "none");
-			console.log("Canciones favoritas: ", favorites);
+			
+			// Limpiar selección de país 
+			selectedCountry = null;
+
 			// Detener audio actual
 			if (currentAudio) {
 				currentAudio.stop();
 				currentAudio.remove();
 			}
+			currentAudio = null;
+			currentSongInfo = null;
+			albumArt = null;
+			flagImg = null;
+			isPlaying = false;
 			selectAll(".musicFrame").forEach(f => f.remove());
 		} else {
 			mode = "normal";
+
 			// Mostrar globo
 			select("#globe-container").style("display", "block");
+
+			// Reset del reproductor al salir de favoritos
+			if (currentAudio) {
+				currentAudio.stop();
+				currentAudio.remove();
+			}
+			currentAudio = null;
+			currentSongInfo = null;
+			albumArt = null;
+			flagImg = null;
+			isPlaying = false;
 		}
 	});
 }
@@ -511,10 +532,6 @@ async function getCountryFlag(countryName) {
 		console.log("Buscando ISO2 para", countryName);
 		const res = await fetch(url);
 		const data = await res.json();
-		// China devuelve "TW" en vez de "CN", manejar caso especial
-		if (countryName.toLowerCase() === "china") {
-			return "cn";
-		}
 		if (data && data[0] && data[0].cca2) {
 			return data[0].cca2.toLowerCase();
 		}
