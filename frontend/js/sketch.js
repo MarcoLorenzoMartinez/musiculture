@@ -83,9 +83,9 @@ function draw() {
 	if (mode === "normal") {
 		// Control por gestos de la mano
 		drawHandControl();
-    } else if (mode === "favorites") {
-        drawFavoritesUI();
-    }
+	} else if (mode === "favorites") {
+		drawFavoritesUI();
+	}
 }
 
 function drawMenuBar() {
