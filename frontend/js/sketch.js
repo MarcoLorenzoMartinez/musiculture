@@ -258,20 +258,6 @@ function drawFavoriteCard(fav, x, y, w, h, index) {
 	fill(150);
 	text(fav.country, textX, textY + 42);
 
-	// Botón de reproducir
-	const playX = x + w - 45;
-	const playY = y + h / 2 - 8;
-	const playSize = 24;
-	
-	if (isHover) {
-		fill("#A5D6A7");
-	} else {
-		fill(200);
-	}
-	textAlign(CENTER, CENTER);
-	textSize(playSize);
-	text("▶", playX, playY);
-
 	// Botón de eliminar
 	const delX = x + w - 20;
 	const delY = y + 10;
