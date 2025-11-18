@@ -297,7 +297,7 @@ function drawFavoriteCard(fav, x, y, w, h, index) {
 	// Interacciones
 	if (isHover && mouseIsPressed && !controlCooldown) {
 		controlCooldown = true;
-		
+
 		// Click en eliminar
 		if (dist(mouseX, mouseY, delX, delY) < 15) {
 			removeFavorite(fav.id);
@@ -341,8 +341,8 @@ function drawPlayerBar() {
 	if (mode !== "favorites") {
 		drawIcon("⏮", centerX - spacing, centerY - 5, iconSize, () => previousSong());
 		drawIcon("⏭", centerX + spacing, centerY - 5, iconSize, () => nextSong());
+		drawIcon(isFavorite ? "★" : "☆", width - 60, centerY - 5, iconSize, () => toggleFavorite());
 	}
-	drawIcon(isFavorite ? "★" : "☆", width - 60, centerY - 5, iconSize, () => toggleFavorite());
 
 	// Barra de progreso interactiva
 	if (currentAudio && currentAudio.elt.duration) {
@@ -529,7 +529,6 @@ async function loadMusicForCountry(wikidataId, countryName) {
 async function getCountryFlag(countryName) {
 	const url = `https://restcountries.com/v3.1/name/${encodeURIComponent(countryName)}?fields=cca2`;
 	try {
-		console.log("Buscando ISO2 para", countryName);
 		const res = await fetch(url);
 		const data = await res.json();
 		if (data && data[0] && data[0].cca2) {
@@ -616,7 +615,8 @@ function playCurrentSong() {
 	currentSongInfo = {
 		artist: song.artist,
 		track: song.track,
-		country: song.country
+		country: song.country,
+		id: song.id
 	};
 	// Comprobar si es favorita
 	isFavorite = favorites.some(f => f.id === song.id);
@@ -743,6 +743,14 @@ function toggleFavorite() {
 }
 
 function playFavorite(fav) {
+	// Detener audio actual
+	if (currentAudio) {
+		currentAudio.stop();
+		currentAudio.remove();
+		currentAudio = null;
+	}
+	selectAll(".musicFrame").forEach(f => f.remove());
+
 	// Reproducir favorito
 	currentAudio = createAudio(fav.previewUrl);
 	currentAudio.attribute("controls", false);
@@ -750,15 +758,18 @@ function playFavorite(fav) {
 	currentAudio.style("display", "none");
 	currentAudio.parent(document.body);
 
+	// Configurar info de la canción
 	currentSongInfo = {
 		artist: fav.artist,
 		track: fav.track,
-		country: fav.country
+		country: fav.country,
+		id: fav.id
 	};
 
 	isFavorite = true;
 	isPlaying = true;
 
+	// Cargar portada
 	if (fav.artwork) {
 		albumArt = favoriteArtworks[fav.id] || null;
 		if (!albumArt) {
@@ -768,6 +779,7 @@ function playFavorite(fav) {
 		albumArt = null;
 	}
 
+	// Cargar bandera
 	currentFlagISO = fav.flag;
 	flagImg = favoriteFlagImgs[fav.flag] || null;
 	if (!flagImg && fav.flag) {
@@ -775,19 +787,31 @@ function playFavorite(fav) {
 		loadImage(flagUrl, img => flagImg = img);
 	}
 
+	// Reproducir la nueva canción
 	currentAudio.play();
+
+	// Cuando termine, no hacer nada
 	currentAudio.elt.addEventListener("ended", () => {
-		// Al terminar, no hacer nada (no hay siguiente en favoritos)
+		// Al terminar, no hacer nada (no hay siguiente en el modo favoritos)
 		isPlaying = false;
 	});
 }
 
 function removeFavorite(id) {
-	favorites = favorites.filter(f => f.id !== id);
-	saveFavorites();
-	
-	// Si es la canción actual, actualizar estado
-	if (playlist[currentIndex] && playlist[currentIndex].id === id) {
-		isFavorite = false;
+	// Si la canción eliminada es la que está sonando, parar reproducción
+	if (currentSongInfo && currentSongInfo.id === id) {
+		if (currentAudio) {
+			currentAudio.stop();
+			currentAudio.remove();
+		}
+		currentAudio = null;
+		currentSongInfo = null;
+		albumArt = null;
+		flagImg = null;
+		isPlaying = false;
 	}
+
+    // Eliminar la cancióndel array de favoritos
+    favorites = favorites.filter(f => f.id !== id);
+    saveFavorites();
 }
