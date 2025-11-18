@@ -115,6 +115,12 @@ function drawMenuBar() {
 			// Ocultar globo
 			select("#globe-container").style("display", "none");
 			console.log("Canciones favoritas: ", favorites);
+			// Detener audio actual
+			if (currentAudio) {
+				currentAudio.stop();
+				currentAudio.remove();
+			}
+			selectAll(".musicFrame").forEach(f => f.remove());
 		} else {
 			mode = "normal";
 			// Mostrar globo
@@ -310,9 +316,11 @@ function drawPlayerBar() {
 	const iconSize = 28;
 	const spacing = 70;
 
-	drawIcon("⏮", centerX - spacing, centerY - 5, iconSize, () => previousSong());
 	drawIcon(isPlaying ? "⏸" : "▶", centerX, centerY - 5, iconSize + 4, () => togglePlay());
-	drawIcon("⏭", centerX + spacing, centerY - 5, iconSize, () => nextSong());
+	if (mode !== "favorites") {
+		drawIcon("⏮", centerX - spacing, centerY - 5, iconSize, () => previousSong());
+		drawIcon("⏭", centerX + spacing, centerY - 5, iconSize, () => nextSong());
+	}
 	drawIcon(isFavorite ? "★" : "☆", width - 60, centerY - 5, iconSize, () => toggleFavorite());
 
 	// Barra de progreso interactiva
@@ -452,7 +460,7 @@ let pendingFetch = false;
 
 const INITIAL_BATCH = 2;	// primeras canciones al cambiar de país
 const FETCH_BATCH = 5;		// cada recarga en background
-const MIN_LEFT = 4;				// cuando queden 4 -> recargar
+const MIN_LEFT = 4;			// cuando queden 4 -> recargar
 
 // Cargar música para un país dado su ID de Wikidata
 async function loadMusicForCountry(wikidataId, countryName) {
@@ -713,17 +721,6 @@ function toggleFavorite() {
 }
 
 function playFavorite(fav) {
-	// Cambiar a modo normal para mostrar el reproductor correctamente
-	mode = "normal";
-	select("#globe-container").style("display", "block");
-
-	// Detener audio actual
-	if (currentAudio) {
-		currentAudio.stop();
-		currentAudio.remove();
-	}
-	selectAll(".musicFrame").forEach(f => f.remove());
-
 	// Reproducir favorito
 	currentAudio = createAudio(fav.previewUrl);
 	currentAudio.attribute("controls", false);
