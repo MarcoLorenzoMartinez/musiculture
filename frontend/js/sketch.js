@@ -21,6 +21,12 @@ const COOLDOWN_TIME = 200; // tiempo en ms (0.2s)
 // Favoritos
 let favorites = [];
 let isFavorite = false;
+let favoriteArtworks = {}; // Cache de portadas de favoritos
+let favoriteFlagImgs = {}; // Cache de banderas de favoritos
+
+// Scroll de favoritos
+let favoritesScrollY = 0;
+let maxFavoritesScroll = 0;
 
 function preload() {
 	logoImg = loadImage("frontend/assets/completo_sinFondo.png");
@@ -32,6 +38,7 @@ function setup() {
 
 	// Cargar favoritos
 	loadFavorites();
+	loadFavoriteImages();
 
 	// Crear contenedor para el globo entre las dos barras
 	const globeDiv = select("#globe-container");
@@ -79,8 +86,6 @@ function draw() {
     } else if (mode === "favorites") {
         drawFavoritesUI();
     }
-
-
 }
 
 function drawMenuBar() {
@@ -103,14 +108,207 @@ function drawMenuBar() {
 	const favX = width - 60;
 	const favY = menuHeight / 2;
 
-	drawIcon("★", favX, favY, favIconSize, () => {
+	drawIcon(mode === "favorites" ? "✕" : "★", favX, favY, favIconSize, () => {
 		if (mode === "normal") {
 			mode = "favorites";
+			favoritesScrollY = 0;
+			// Ocultar globo
+			select("#globe-container").style("display", "none");
 			console.log("Canciones favoritas: ", favorites);
 		} else {
 			mode = "normal";
+			// Mostrar globo
+			select("#globe-container").style("display", "block");
 		}
 	});
+}
+
+function drawFavoritesUI() {
+	// Área de contenido
+	const contentY = menuHeight;
+	const contentHeight = height - menuHeight - playerHeight;
+	
+	// Fondo semi-transparente
+	fill(30, 30, 35);
+	rect(0, contentY, width, contentHeight);
+
+	// Título
+	fill(255);
+	textAlign(CENTER, TOP);
+	textSize(32);
+	textStyle(BOLD);
+	text("Mis Favoritos", width / 2, contentY + 30);
+
+	if (favorites.length === 0) {
+		// Mensaje vacío
+		fill(200);
+		textSize(18);
+		textStyle(NORMAL);
+		text("No tienes canciones favoritas aún", width / 2, contentY + 100);
+		text("¡Explora países y añade música que te guste!", width / 2, contentY + 130);
+		return;
+	}
+
+	// Grid de favoritos
+	const cardWidth = 280;
+	const cardHeight = 100;
+	const gap = 20;
+	const cols = Math.floor((width - 60) / (cardWidth + gap));
+	const startX = (width - (cols * (cardWidth + gap) - gap)) / 2;
+	const startY = contentY + 90;
+
+	// Calcular scroll máximo
+	const rows = Math.ceil(favorites.length / cols);
+	const totalHeight = rows * (cardHeight + gap);
+	maxFavoritesScroll = max(0, totalHeight - contentHeight + 120);
+
+	push();
+	// Clip para que no se salga del área
+	drawingContext.save();
+	drawingContext.beginPath();
+	drawingContext.rect(0, startY, width, contentHeight - 90);
+	drawingContext.clip();
+
+	// Dibujar cada canción favorita
+	favorites.forEach((fav, index) => {
+		const col = index % cols;
+		const row = Math.floor(index / cols);
+		const x = startX + col * (cardWidth + gap);
+		const y = startY + row * (cardHeight + gap) - favoritesScrollY;
+
+		// Solo dibujar si está visible
+		if (y + cardHeight > contentY && y < contentY + contentHeight) {
+			drawFavoriteCard(fav, x, y, cardWidth, cardHeight, index);
+		}
+	});
+
+	drawingContext.restore();
+	pop();
+
+	// Indicador de scroll si hay más contenido
+	if (maxFavoritesScroll > 0) {
+		fill(100);
+		textSize(14);
+		textAlign(CENTER, BOTTOM);
+		text("↕ Usa la rueda del ratón para desplazarte", width / 2, height - playerHeight - 10);
+	}
+}
+
+function drawFavoriteCard(fav, x, y, w, h, index) {
+	// Detectar hover
+	const isHover = mouseX > x && mouseX < x + w && 
+	                mouseY > y && mouseY < y + h;
+
+	// Card background
+	if (isHover) {
+		fill(60, 80, 60);
+		stroke(140, 200, 140);
+		strokeWeight(2);
+	} else {
+		fill(45, 50, 55);
+		stroke(70, 75, 80);
+		strokeWeight(1);
+	}
+	rect(x, y, w, h, 8);
+	noStroke();
+
+	// Portada
+	const artSize = 80;
+	const artX = x + 10;
+	const artY = y + 10;
+
+	if (favoriteArtworks[fav.id]) {
+		image(favoriteArtworks[fav.id], artX, artY, artSize, artSize);
+	} else {
+		// Placeholder
+		fill(80);
+		rect(artX, artY, artSize, artSize, 4);
+		fill(150);
+		textSize(12);
+		textAlign(CENTER, CENTER);
+		text("♪", artX + artSize / 2, artY + artSize / 2);
+	}
+
+	// Bandera sobre la portada
+	if (fav.flag && favoriteFlagImgs[fav.flag]) {
+		const flagW = 24;
+		const flagH = 16;
+		const flagX = artX + artSize - flagW + 8;
+		const flagY = artY + artSize - flagH + 6;
+		image(favoriteFlagImgs[fav.flag], flagX, flagY, flagW, flagH);
+	}
+
+	// Info de la canción
+	const textX = artX + artSize + 12;
+	const textY = y + 15;
+	const textW = w - artSize - 60;
+
+	fill(255);
+	textAlign(LEFT, TOP);
+	textSize(16);
+	textStyle(BOLD);
+	text(truncateText(fav.track, textW, 16), textX, textY);
+
+	textSize(13);
+	textStyle(NORMAL);
+	fill(200);
+	text(truncateText(fav.artist, textW, 13), textX, textY + 22);
+
+	textSize(11);
+	fill(150);
+	text(fav.country, textX, textY + 42);
+
+	// Botón de reproducir
+	const playX = x + w - 45;
+	const playY = y + h / 2 - 8;
+	const playSize = 24;
+	
+	if (isHover) {
+		fill("#A5D6A7");
+	} else {
+		fill(200);
+	}
+	textAlign(CENTER, CENTER);
+	textSize(playSize);
+	text("▶", playX, playY);
+
+	// Botón de eliminar
+	const delX = x + w - 20;
+	const delY = y + 10;
+	const delSize = 16;
+	
+	fill(200, 100, 100);
+	textSize(delSize);
+	text("✕", delX, delY);
+
+	// Interacciones
+	if (isHover && mouseIsPressed && !controlCooldown) {
+		controlCooldown = true;
+		
+		// Click en eliminar
+		if (dist(mouseX, mouseY, delX, delY) < 15) {
+			removeFavorite(fav.id);
+		}
+		// Click en reproducir o en la card
+		else {
+			playFavorite(fav);
+		}
+		
+		setTimeout(() => (controlCooldown = false), COOLDOWN_TIME);
+	}
+}
+
+function truncateText(text, maxWidth, fontSize) {
+	textSize(fontSize);
+	if (textWidth(text) <= maxWidth) {
+		return text;
+	}
+	
+	let truncated = text;
+	while (textWidth(truncated + "...") > maxWidth && truncated.length > 0) {
+		truncated = truncated.slice(0, -1);
+	}
+	return truncated + "...";
 }
 
 function drawPlayerBar() {
@@ -210,7 +408,7 @@ function drawIcon(symbol, x, y, baseSize, onClick) {
 	// Efecto hover (aumenta un poco)
 	if (hover) {
 		iconSize = lerp(iconSize, baseSize * 1.2, 0.2);
-		fill("#A5D6A7"); // verde más claro
+		fill("#A5D6A7");
 	} else {
 		fill(255);
 	}
@@ -232,12 +430,18 @@ function drawIcon(symbol, x, y, baseSize, onClick) {
 	}
 }
 
-
 function formatTime(seconds) {
 	if (isNaN(seconds)) return "0:00";
 	const m = Math.floor(seconds / 60);
 	const s = Math.floor(seconds % 60);
 	return `${m}:${s < 10 ? "0" : ""}${s}`;
+}
+
+function mouseWheel(event) {
+	if (mode === "favorites") {
+		favoritesScrollY = constrain(favoritesScrollY + event.delta * 0.5, 0, maxFavoritesScroll);
+		return false; // Prevenir scroll de página
+	}
 }
 
 function windowResized() {
@@ -465,6 +669,22 @@ function saveFavorites() {
 	localStorage.setItem("musiculture_favorites", JSON.stringify(favorites));
 }
 
+function loadFavoriteImages() {
+	favorites.forEach(fav => {
+		if (fav.artwork && !favoriteArtworks[fav.id]) {
+			loadImage(fav.artwork, img => {
+				favoriteArtworks[fav.id] = img;
+			});
+		}
+		if (fav.flag && !favoriteFlagImgs[fav.flag]) {
+			const flagUrl = `https://flagcdn.com/w80/${fav.flag}.png`;
+			loadImage(flagUrl, img => {
+				favoriteFlagImgs[fav.flag] = img;
+			});
+		}
+	});
+}
+
 function toggleFavorite() {
 	if (!currentAudio || !currentSongInfo) return;
 
@@ -489,7 +709,80 @@ function toggleFavorite() {
 		// Añadir
 		favorites.push(favObj);
 		isFavorite = true;
+		// Cargar imagen si no existe
+		if (favObj.artwork && !favoriteArtworks[favObj.id]) {
+			loadImage(favObj.artwork, img => {
+				favoriteArtworks[favObj.id] = img;
+			});
+		}
+		if (favObj.flag && !favoriteFlagImgs[favObj.flag]) {
+			const flagUrl = `https://flagcdn.com/w80/${favObj.flag}.png`;
+			loadImage(flagUrl, img => {
+				favoriteFlagImgs[favObj.flag] = img;
+			});
+		}
 	}
 
 	saveFavorites();
+}
+
+function playFavorite(fav) {
+	// Cambiar a modo normal para mostrar el reproductor correctamente
+	mode = "normal";
+	select("#globe-container").style("display", "block");
+
+	// Detener audio actual
+	if (currentAudio) {
+		currentAudio.stop();
+		currentAudio.remove();
+	}
+	selectAll(".musicFrame").forEach(f => f.remove());
+
+	// Reproducir favorito
+	currentAudio = createAudio(fav.previewUrl);
+	currentAudio.attribute("controls", false);
+	currentAudio.attribute("class", "musicFrame");
+	currentAudio.style("display", "none");
+	currentAudio.parent(document.body);
+
+	currentSongInfo = {
+		artist: fav.artist,
+		track: fav.track,
+		country: fav.country
+	};
+
+	isFavorite = true;
+	isPlaying = true;
+
+	if (fav.artwork) {
+		albumArt = favoriteArtworks[fav.id] || null;
+		if (!albumArt) {
+			loadImage(fav.artwork, img => albumArt = img);
+		}
+	} else {
+		albumArt = null;
+	}
+
+	currentFlagISO = fav.flag;
+	flagImg = favoriteFlagImgs[fav.flag] || null;
+	if (!flagImg && fav.flag) {
+		const flagUrl = `https://flagcdn.com/w80/${fav.flag}.png`;
+		loadImage(flagUrl, img => flagImg = img);
+	}
+
+	currentAudio.play();
+	currentAudio.elt.addEventListener("ended", () => {
+		// Al terminar, no hacer nada (no hay siguiente en favoritos)
+		isPlaying = false;
+	});
+}
+
+function removeFavorite(id) {
+	favorites = favorites.filter(f => f.id !== id);
+	saveFavorites();
+	
+	// Si es la canción actual, actualizar estado
+	if (playlist[currentIndex] && playlist[currentIndex].id === id) {
+		isFavorite = false;
+	}
 }
