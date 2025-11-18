@@ -204,3 +204,9 @@ function resizeGlobe(newWidth, newHeight) {
 
 	svg.selectAll("path").attr("d", path);
 }
+
+// Dejar de seleccionar país
+function clearSelectedCountry() {
+	svg.selectAll(".country").classed("country-selected", false);
+	selectedCountry = null;
+}
