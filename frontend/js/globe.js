@@ -90,7 +90,7 @@ function initGlobe(onCountryClick) {
 
 					// Marcar país actual
 					d3.select(event.currentTarget).classed("country-selected", true);
-					selectedCountry = d.properties.name;
+					selectedCountry = d;
 
 					// Notificar callback externo
 					onCountryClick(d.properties.name);
@@ -100,6 +100,10 @@ function initGlobe(onCountryClick) {
 		});
 
 	addInteraction();
+}
+
+function getSelectedCountryID() {
+	return selectedCountry ? selectedCountry.id : null;
 }
 
 // Conversión completa de código ISO3 -> ISO2 (compatible con GeoJSON + FlagCDN)

@@ -515,29 +515,14 @@ async function loadMusicForCountry(wikidataId, countryName) {
 	await fetchMoreSongs(countryName, INITIAL_BATCH);
 
 	// Obtener la bandera
-	currentFlagISO = await getCountryFlag(countryName);
+	currentFlagISO = iso3to2(getSelectedCountryID());
 	flagImg = null;
 	if (currentFlagISO) {
-		const flagUrl = `https://flagcdn.com/w80/${currentFlagISO}.png`;
+		const flagUrl = `https://flagcdn.com/w40/${currentFlagISO}.png`;
 		loadImage(flagUrl, img => flagImg = img);
 	}
 
 	playCurrentSong();
-}
-
-// Convertir el nombre de un país en ISO2 usando un endpoint CDN gratuito
-async function getCountryFlag(countryName) {
-	const url = `https://restcountries.com/v3.1/name/${encodeURIComponent(countryName)}?fields=cca2`;
-	try {
-		const res = await fetch(url);
-		const data = await res.json();
-		if (data && data[0] && data[0].cca2) {
-			return data[0].cca2.toLowerCase();
-		}
-	} catch (err) {
-		console.warn("No se pudo obtener ISO2 de", countryName);
-	}
-	return null;
 }
 
 async function fetchMoreSongs(countryName, batchSize = FETCH_BATCH) {
