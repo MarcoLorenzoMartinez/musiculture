@@ -22,8 +22,41 @@ function setupVoiceControl() {
         console.log("Voz:", transcript);
 
         // ---- COMANDOS DE CONTROL ----
+        // Parar rotación automática del globo
+        const stopRotateCommands = ["no girar", "no gira", "no giro", "no rotar", "no rota"];
+        "no girar", "no giro", "no gira", "no rotar", "no rota"
+        if (stopRotateCommands.some(cmd => transcript === cmd)) {
+            autoRotate = false;
+            return;
+        }
+        // Iniciar rotación automática del globo
+        const startRotateCommands = ["girar", "gira", "giro", "rota", "rotar"];
+        if (startRotateCommands.some(cmd => transcript === cmd)) {
+            autoRotate = true;
+            return;
+        }
+        // Ampliar globo
+        const zoomInCommands = ["acerca", "acercar", "cerca", "zoom", "amplia", "ampliar", "aumenta", "aumentar"];
+        if (zoomInCommands.some(cmd => transcript.includes(cmd))) {
+            currentScale *= 1.2;
+            currentScale = Math.min(800, currentScale);
+            projection.scale(currentScale);
+            globe.attr("r", currentScale);
+            svg.selectAll("path").attr("d", path);
+            return;
+        }
+        // Alejar globo
+        const zoomOutCommands = ["aleja", "alejar", "lejos", "desampliar", "reduce", "reducir"];
+        if (zoomOutCommands.some(cmd => transcript.includes(cmd))) {
+            currentScale *= 0.8;
+            currentScale = Math.max(150, currentScale);
+            projection.scale(currentScale);
+            globe.attr("r", currentScale);
+            svg.selectAll("path").attr("d", path);
+            return;
+        }
         // Parar canción
-        const pauseCommands = ["pausa", "detener", "para", "parar", "parate", "detente", "pause", "stop", "halt", "hold"];
+        const pauseCommands = ["pausa", "pausar", "detener", "para", "parar", "parate", "detente", "pause", "stop", "halt", "hold"];
         if (pauseCommands.some(cmd => transcript.includes(cmd))) {
             if (currentAudio) currentAudio.pause();
             return;
