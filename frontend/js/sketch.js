@@ -219,8 +219,8 @@ function drawModeItem(label, x, y, active, onClick) {
 
   textAlign(CENTER, CENTER);
   textSize(18);
-//   textStyle(active ? BOLD : NORMAL);
-  textStyle(BOLD);
+  textStyle(active ? BOLD : NORMAL);
+//   textStyle(BOLD);
   text(label, x, y);
 
   if (mouseIsPressed && hover && !controlCooldown) {
