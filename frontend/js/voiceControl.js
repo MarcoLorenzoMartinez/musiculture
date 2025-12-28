@@ -7,7 +7,7 @@ let recognition;
 function setupVoiceControl() {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) {
-        alert("⚠️ Tu navegador no soporta reconocimiento de voz.");
+        alert("Tu navegador no soporta reconocimiento de voz.");
         return;
     }
 
@@ -50,10 +50,16 @@ function setupVoiceControl() {
                 previousSong();
             return;
         }
-        // Favoritos
+        // Abrir favoritos
         if (transcript.includes("favoritos")) {
             mode = "favorites";
             select("#globe-container").style("display", "none");
+            return;
+        }
+        // Añadir a favoritos
+        const favCommands = ["hola"];
+        if (favCommands.some(cmd => transcript.includes(cmd))) {
+            toggleFavorite();
             return;
         }
         // Modo normal (globo)
@@ -70,10 +76,12 @@ function setupVoiceControl() {
         for (let [alias, countryEnglish] of Object.entries(countryTranslations)) {
             if (transcript.includes(alias)) {
                 const wikidataId = await getWikidataId(countryEnglish);
+                console.log(wikidataId);
                 if (wikidataId) {
                     console.log(`Navegando a ${countryEnglish} (${wikidataId}) por comando de voz.`);
                     loadMusicForCountry(wikidataId, countryEnglish);
                 }
+                focusCountryByName(countryEnglish);
                 return;
             }
         }
@@ -85,6 +93,44 @@ function setupVoiceControl() {
         if (voiceActive) recognition.start(); // Reiniciar automáticamente
     };
 }
+
+function focusCountryByName(countryName) {
+    if (!window.loadedCountries) return;
+
+    // Detener rotación automática del globo
+    autoRotate = false;
+
+    // Buscar el país por nombre (ya normalizado)
+    const country = window.loadedCountries.find(c => c.properties.name.toLowerCase() === countryName.toLowerCase());
+    if (!country) return;
+
+    selectedCountry = country;
+
+    // Obtener el centro del país (centroid)
+    const centroid = path.centroid(country);
+    const [x, y] = centroid;
+
+    // Calcular coordenadas geográficas del centroid
+    const geoCentroid = d3.geoCentroid(country); // [longitud, latitud]
+
+    // Animar la rotación del globo
+    d3.transition()
+        .duration(1500)
+        .tween("rotate", () => {
+            const r0 = rotation.slice();
+            const r1 = [-geoCentroid[0], -geoCentroid[1]]; // invertir para proyección
+            return t => {
+                rotation[0] = r0[0] + (r1[0] - r0[0]) * t;
+                rotation[1] = r0[1] + (r1[1] - r0[1]) * t;
+                projection.rotate(rotation);
+                svg.selectAll("path").attr("d", path);
+            };
+        });
+
+    // Resaltar el país
+    svg.selectAll(".country").classed("country-selected", d => d === country);
+}
+
 
 // Diccionario español/aliases a nombre en inglés
 const countryTranslations = {

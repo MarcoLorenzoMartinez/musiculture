@@ -506,6 +506,7 @@ function drawPlayerBar() {
 }
 
 function drawIcon(symbol, x, y, baseSize, onClick) {
+	textStyle(NORMAL);
 	const hover = dist(mouseX, mouseY, x, y) < baseSize * 0.8; // detectar hover
 	let iconSize = baseSize;
 
