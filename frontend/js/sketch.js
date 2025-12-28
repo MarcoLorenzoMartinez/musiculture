@@ -4,6 +4,7 @@
 */
 
 let mode = "normal"; // "normal" o "favorites"
+let interactionMode = "normal"; // "normal", "handControl" o "voiceControl"
 
 let menuHeight = 70; // Altura de la barra superior
 let playerHeight = 100; // Altura de la barra inferior
@@ -55,21 +56,41 @@ function setup() {
 		}
 	});
 
-	// Botón para activar modo de control manual
-	let gestureButton = createButton("Activar control por manos");
-	gestureButton.position(20, menuHeight + 10);
-	gestureButton.mousePressed(() => {
-		handControlActive = !handControlActive;
-		if (handControlActive) {
-			setupHandControl();
-			autoRotate = false; // Detener rotación al activar
-		} else {
-			autoRotate = true;	// Reanudar rotación al desactivar
-			removeCenterMarker(); // Quitar marcador central
-		}
-		gestureButton.html(handControlActive ? "🚫 Desactivar control por manos" : "🖐 Activar control por manos");
-	});
+	// // Botón para activar modo de control manual
+	// let gestureButton = createButton("Activar control por manos");
+	// gestureButton.position(20, menuHeight + 10);
+	// gestureButton.mousePressed(() => {
+	// 	handControlActive = !handControlActive;
+	// 	if (handControlActive) {
+	// 		setupHandControl();
+	// 		autoRotate = false; // Detener rotación al activar
+	// 	} else {
+	// 		cleanupHandControl();
+	// 	}
+	// 	gestureButton.html(handControlActive ? "🚫 Desactivar control por manos" : "🖐 Activar control por manos");
+	// });
+
+	// // Botón para activar/desactivar control por voz
+	// addVoiceButton();
 }
+
+// function addVoiceButton() {
+// 	let voiceBtn = createButton("🎤 Activar voz");
+//     voiceBtn.position(20, menuHeight + 50);
+
+//     voiceBtn.mousePressed(() => {
+//         voiceActive = !voiceActive;
+
+//         if (voiceActive) {
+//             setupVoiceControl();
+//             recognition.start();
+//             voiceBtn.html("🛑 Desactivar voz");
+//         } else {
+//             recognition.stop();
+//             voiceBtn.html("🎤 Activar voz");
+//         }
+//     });
+// }
 
 function draw() {
 	background(20);
@@ -102,6 +123,39 @@ function drawMenuBar() {
 
 	rect(x - 5, y - 5, logoWidth + 10, logoHeight + 10, 8);
 	image(logoImg, x, y, logoWidth, logoHeight);
+
+	// Modos de juego
+	const baseY = menuHeight / 2;
+	const startX = 230;
+	const spacing = 150;
+
+	drawModeItem(
+	"Normal",
+	startX,
+	baseY,
+	interactionMode === "normal",
+	() => setInteractionMode("normal")
+	);
+
+	drawSeparator(startX + spacing / 2, 15, menuHeight - 15);
+
+	drawModeItem(
+	"Control Gestual",
+	startX + spacing,
+	baseY,
+	interactionMode === "handControl",
+	() => setInteractionMode("handControl")
+	);
+
+	drawSeparator(startX + spacing * 3/2, 15, menuHeight - 15);
+
+	drawModeItem(
+	"Control por Voz",
+	startX + spacing * 2,
+	baseY,
+	interactionMode === "voiceControl",
+	() => setInteractionMode("voiceControl")
+	);
 
 	// Icono de favoritos en la barra superior
 	const favIconSize = 40;
@@ -149,6 +203,41 @@ function drawMenuBar() {
 		}
 	});
 }
+
+function drawModeItem(label, x, y, active, onClick) {
+  const w = textWidth(label) + 20;
+  const hover = mouseX > x - w / 2 && mouseX < x + w / 2 &&
+                mouseY > y - 15 && mouseY < y + 15;
+
+  if (active) {
+    fill("#A5D6A7");
+  } else if (hover) {
+    fill(220);
+  } else {
+    fill(255);
+  }
+
+  textAlign(CENTER, CENTER);
+  textSize(18);
+//   textStyle(active ? BOLD : NORMAL);
+  textStyle(BOLD);
+  text(label, x, y);
+
+  if (mouseIsPressed && hover && !controlCooldown) {
+    controlCooldown = true;
+    onClick();
+    setTimeout(() => controlCooldown = false, COOLDOWN_TIME);
+  }
+}
+
+function drawSeparator(x, yTop, yBottom) {
+  stroke(255, 120);
+  strokeWeight(2);
+  line(x, yTop, x, yBottom);
+  noStroke();
+}
+
+
 
 function drawFavoritesUI() {
 	// Área de contenido
@@ -465,6 +554,31 @@ function windowResized() {
 	globeDiv.position(0, menuHeight);
 	globeDiv.size(windowWidth, windowHeight - menuHeight - playerHeight);
 	resizeGlobe(windowWidth, windowHeight - menuHeight - playerHeight);
+}
+
+function setInteractionMode(mode) {
+	if (interactionMode === mode) return;
+
+	// Apagar todo primero
+	autoRotate = true; // Reanudar rotación automática
+	if (interactionMode === "handControl") {
+		cleanupHandControl();
+	}
+	if (interactionMode === "voiceControl") {
+		recognition.stop();
+		voiceActive = false;
+	}
+
+	// Activar el nuevo modo
+	interactionMode = mode;
+
+	if (interactionMode === "handControl") {
+		handControlActive = true;
+		setupHandControl();
+	} else if (interactionMode === "voiceControl") {
+		setupVoiceControl();
+		recognition.start();
+	}
 }
 
 

@@ -38,6 +38,7 @@ function initGlobe(onCountryClick) {
 	// Mapa mundial
 	d3.json("https://raw.githubusercontent.com/holtzy/D3-graph-gallery/master/DATA/world.geojson")
 		.then(data => {
+			window.loadedCountries = data.features;
 			// Tooltip (indicador de país)
 			const tooltip = d3.select("body")
 				.append("div")
@@ -91,6 +92,7 @@ function initGlobe(onCountryClick) {
 					// Marcar país actual
 					d3.select(event.currentTarget).classed("country-selected", true);
 					selectedCountry = d;
+					console.log(d);
 
 					// Notificar callback externo
 					onCountryClick(d.properties.name);

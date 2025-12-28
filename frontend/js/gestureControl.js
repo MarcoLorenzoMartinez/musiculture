@@ -43,6 +43,10 @@ function setupHandControl() {
 function cleanupHandControl() {
   // Eliminar el punto central del SVG
   removeCenterMarker();
+  handControlActive = false;
+  autoRotate = true;
+
+  console.log("Control por gestos desactivado");
 
   // Detener los modelos si es necesario
   if (handPose) {
