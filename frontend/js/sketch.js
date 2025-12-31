@@ -29,6 +29,10 @@ let favoriteFlagImgs = {}; // Cache de banderas de favoritos
 let favoritesScrollY = 0;
 let maxFavoritesScroll = 0;
 
+// Scroll de ayuda	
+let helpScrollY = 0;
+let maxHelpScroll = 0;
+
 function preload() {
 	logoImg = loadImage("frontend/assets/completo_sinFondo.png");
 }
@@ -178,8 +182,12 @@ function drawMenuBar() {
 function setMode(newMode) {
 	if (mode === "normal") {
 		mode = newMode;
+		// Reiniciamos scrolls
 		if (mode === "favorites") {
 			favoritesScrollY = 0;
+		}
+		if (mode === "help") {
+			helpScrollY = 0;
 		}
 		// Ocultar globo
 			select("#globe-container").style("display", "none");
@@ -249,8 +257,6 @@ function drawSeparator(x, yTop, yBottom) {
   line(x, yTop, x, yBottom);
   noStroke();
 }
-
-
 
 function drawFavoritesUI() {
 	// Área de contenido
@@ -427,7 +433,7 @@ function truncateText(text, maxWidth, fontSize) {
 }
 
 function drawHelpUI() {
-    const contentY = menuHeight;
+	const contentY = menuHeight;
     const contentHeight = height - menuHeight - playerHeight;
 
     // Fondo
@@ -435,44 +441,49 @@ function drawHelpUI() {
     rect(0, contentY, width, contentHeight);
 
     // Título
-    fill(255);
-    textAlign(CENTER, TOP);
-    textSize(32);
-    textStyle(BOLD);
-    text("Comandos de Voz", width / 2, contentY + 30);
+    drawHelpHeader(contentY);
 
     textStyle(NORMAL);
     textSize(18);
     fill(220);
 
-    let y = contentY + 100;
+	const startY = contentY + 90;
     const lineGap = 36;
+    let y = startY - helpScrollY;
 
-    drawHelpSection("Reproducción", [
-        "▶ play / reproducir / pon música",
-        "⏸ pausa / parar / stop",
-		"⏭ siguiente / next",
-		"⏮ anterior / previous",
-		"★ añadir a favoritos",
-        "☆ quitar de favoritos"
-    ], y);
+    // Altura total estimada del contenido
+    const totalContentHeight = lineGap * 30;
+    maxHelpScroll = max(0, totalContentHeight - contentHeight + 120);
 
-    y += lineGap * 6;
+    push();
+    drawingContext.save();
+    drawingContext.beginPath();
+    drawingContext.rect(0, startY, width, contentHeight - 90);
+    drawingContext.clip();
 
-    drawHelpSection("Navegación", [
-        "🗺 ir a España",
-        "🗺 quiero Argentina",
-        "🗺 México",
-        "📂 favoritos",
-        "🏠 modo normal"
-    ], y);
-	
-    y += lineGap * 6;
+	if (interactionMode === "voiceControl") {
+		drawVoiceHelp(y, lineGap);
+	} else if (interactionMode === "handControl") {
+		drawHandHelp(contentY);
+	} else {
+		console.log("Dibujando ayuda general");
+		drawGeneralHelp(y, lineGap);
+	}
+}
 
-    drawHelpSection("Control", [
-        "Control por voz solo funciona en modo voz",
-        "Habla claro y espera un segundo entre comandos"
-    ], y);
+function drawHelpHeader(contentY) {
+	fill(255);
+    textAlign(CENTER, TOP);
+    textSize(32);
+    textStyle(BOLD);
+	if (interactionMode === "normal") {
+		text("Comandos Generales", width / 2, contentY + 30);
+	}
+	else if (interactionMode === "handControl") {
+		text("Comandos de Control Gestual", width / 2, contentY + 30);
+	} else if (interactionMode === "voiceControl") {
+		text("Comandos de Voz", width / 2, contentY + 30);
+	}
 }
 
 function drawHelpSection(title, lines, startY) {
@@ -490,6 +501,63 @@ function drawHelpSection(title, lines, startY) {
         text("• " + line, 100, startY + 40 + i * 30);
     });
 }
+
+function drawGeneralHelp(y, lineGap) {
+        drawHelpSection("¿Qué es MUSICULTURE?", [
+        "MUSICULTURE es una app interactiva para descubrir música del mundo",
+        "Explora países en el globo y escucha artistas locales",
+        "Cada país genera una playlist diferente automáticamente"
+    ], y);
+
+    y += lineGap * 5;
+
+    drawHelpSection("Explorar países", [
+        "🌍 Haz click sobre un país en el globo",
+        "El globo gira automáticamente",
+        "Arrastra el ratón para rotar el globo",
+        "Usa la rueda del ratón para hacer zoom",
+        "Al seleccionar un país, la música comienza"
+    ], y);
+
+    y += lineGap * 6;
+
+    drawHelpSection("Reproductor de música", [
+        "▶ Reproducir o pausar",
+        "⏮ Canción anterior",
+        "⏭ Siguiente canción",
+        "Barra de progreso interactiva",
+        "Música asociada al país seleccionado"
+    ], y);
+
+    y += lineGap * 6;
+
+    drawHelpSection("Favoritos", [
+        "★ Añadir canción a favoritos",
+        "☆ Quitar de favoritos",
+        "Accede desde el icono ★ superior",
+        "Los favoritos se guardan automáticamente"
+    ], y);
+
+    y += lineGap * 5;
+
+    drawHelpSection("Modos de interacción", [
+        "Modo Normal: ratón y controles clásicos",
+        "Modo Voz: controla la app hablando",
+        "Modo Gestos: usa movimientos de la mano"
+    ], y);
+
+    drawingContext.restore();
+    pop();
+
+    // Indicador de scroll
+    if (maxHelpScroll > 0) {
+        fill(150);
+        textSize(14);
+        textAlign(CENTER, BOTTOM);
+        text("↕ Usa la rueda del ratón para desplazarte", width / 2, height - playerHeight - 10);
+    }
+}
+
 
 
 
@@ -627,6 +695,11 @@ function mouseWheel(event) {
 		favoritesScrollY = constrain(favoritesScrollY + event.delta * 0.5, 0, maxFavoritesScroll);
 		return false; // Prevenir scroll de página
 	}
+	if (mode === "help" && maxHelpScroll > 0) {
+        helpScrollY += event.delta;
+        helpScrollY = constrain(helpScrollY, 0, maxHelpScroll);
+        return false;
+    }
 }
 
 function windowResized() {
