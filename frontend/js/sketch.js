@@ -477,7 +477,7 @@ function drawHelpHeader(contentY) {
     textSize(32);
     textStyle(BOLD);
 	if (interactionMode === "normal") {
-		text("Comandos Generales", width / 2, contentY + 30);
+		text("Uso de la aplicación", width / 2, contentY + 30);
 	}
 	else if (interactionMode === "handControl") {
 		text("Comandos de Control Gestual", width / 2, contentY + 30);
@@ -509,41 +509,45 @@ function drawGeneralHelp(y, lineGap) {
         "Cada país genera una playlist diferente automáticamente"
     ], y);
 
-    y += lineGap * 5;
+    y += lineGap * 4;
 
     drawHelpSection("Explorar países", [
-        "🌍 Haz click sobre un país en el globo",
-        "El globo gira automáticamente",
-        "Arrastra el ratón para rotar el globo",
+        "Haz click sobre un país en el globo",
+        "El globo gira automáticamente hasta que interactúas",
+        "Mantén pulsado el botón izquierdo del ratón y arrastra para rotar el globo",
         "Usa la rueda del ratón para hacer zoom",
-        "Al seleccionar un país, la música comienza"
+		"Pasa el ratón sobre un país para ver su nombre",
+        "Al seleccionar un país, la música comienza automáticamente"
     ], y);
 
-    y += lineGap * 6;
+    y += lineGap * 6.5;
 
     drawHelpSection("Reproductor de música", [
-        "▶ Reproducir o pausar",
+        "▶ Reproducir",
+        "⏸ Pausar",
         "⏮ Canción anterior",
         "⏭ Siguiente canción",
         "Barra de progreso interactiva",
         "Música asociada al país seleccionado"
     ], y);
 
-    y += lineGap * 6;
+    y += lineGap * 6.5;
 
     drawHelpSection("Favoritos", [
-        "★ Añadir canción a favoritos",
-        "☆ Quitar de favoritos",
-        "Accede desde el icono ★ superior",
+        "★ Añadir la canción actual a favoritos",
+        "☆ Quitar la canción actual de favoritos",
+        "Pulsa el icono ★ (esquina superior derecha) para abrir la lista de favoritos",
+		"Desde favoritos puedes reproducir una canción haciendo click sobre ella",
+		"Usa el botón ✕ para eliminarla de la lista",
         "Los favoritos se guardan automáticamente"
     ], y);
 
-    y += lineGap * 5;
+    y += lineGap * 6.5;
 
     drawHelpSection("Modos de interacción", [
         "Modo Normal: ratón y controles clásicos",
-        "Modo Voz: controla la app hablando",
-        "Modo Gestos: usa movimientos de la mano"
+        "Modo de Control Gestual: controla la app con gestos de la mano",
+        "Modo de Control por Voz: controla la app usando distintos comandos de voz"
     ], y);
 
     drawingContext.restore();
