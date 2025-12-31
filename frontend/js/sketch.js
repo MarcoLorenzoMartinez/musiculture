@@ -451,7 +451,7 @@ function drawHelpUI() {
 	if (interactionMode === "voiceControl") {
 		drawVoiceHelp(contentHeight, contentY);
 	} else if (interactionMode === "handControl") {
-		drawHandHelp(contentY);
+		drawHandHelp(contentHeight, contentY);
 	} else {
 		drawGeneralHelp(contentHeight, contentY);
 	}
@@ -629,6 +629,53 @@ function drawVoiceHelp(contentHeight, contentY) {
     });
 }
 
+function drawHandHelp(contentHeight, contentY) {
+
+    const sections = [
+        {
+            title: "Rotación del globo",
+            lines: [
+                "Mano derecha → mover el globo",
+                "Mantén el dedo índice y mueve la mano para rotar",
+                "El globo no rota automáticamente en este modo"
+            ]
+        },
+        {
+            title: "Seleccionar país (clic central)",
+            lines: [
+                "Mano izquierda → hacer puño para clic central",
+                "El clic selecciona el país centrado en el globo",
+                "Se reproduce automáticamente la música del país seleccionado",
+                "Animación rápida en el punto rojo indica que se ha seleccionado"
+            ]
+        },
+        {
+            title: "Teclado y consejos",
+            lines: [
+                "Tecla 'C' → simula un clic central (opcional)",
+                "Se recomienda usar ambas manos: derecha para rotar, izquierda para seleccionar",
+                "Evita mover demasiado rápido la mano para una detección precisa",
+                "El recuadro de cámara muestra la posición de tus manos"
+            ]
+        }
+    ];
+
+    const colWidth = width / 2 - 40; // hasta 2 columnas
+    let col = 0;
+    let rowY = contentY + 80;
+
+    sections.forEach(section => {
+        const x = 40 + col * (colWidth + 40);
+
+        drawHelpSection(section.title, section.lines, x, rowY);
+
+        rowY += section.lines.length * 30 + 50;
+        if (rowY > contentHeight - 100) {
+            col++;
+            rowY = contentY + 80;
+        }
+    });
+}
 
 function drawPlayerBar() {
 	fill("#2E7D32"); // Verde original
