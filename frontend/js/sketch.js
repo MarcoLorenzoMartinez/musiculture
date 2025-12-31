@@ -3,7 +3,7 @@
 	 barra verde superior con logo, globo D3 y barra inferior tipo reproductor.
 */
 
-let mode = "normal"; // "normal" o "favorites"
+let mode = "normal"; // "normal" / "favorites" / "help"
 let interactionMode = "normal"; // "normal", "handControl" o "voiceControl"
 
 let menuHeight = 70; // Altura de la barra superior
@@ -106,6 +106,8 @@ function draw() {
 		drawHandControl();
 	} else if (mode === "favorites") {
 		drawFavoritesUI();
+	} else if (mode === "help") {
+		drawHelpUI();
 	}
 }
 
@@ -163,31 +165,42 @@ function drawMenuBar() {
 	const favY = menuHeight / 2;
 
 	drawIcon(mode === "favorites" ? "✕" : "★", favX, favY, favIconSize, () => {
-		if (mode === "normal") {
-			mode = "favorites";
-			favoritesScrollY = 0;
+		setMode("favorites");
+	});
 
-			// Ocultar globo
+	// Icono de ayuda
+	drawModeItem(
+		"Help", width - 120, baseY, mode === "help",
+		() => setMode("help")
+	);
+}
+
+function setMode(newMode) {
+	if (mode === "normal") {
+		mode = newMode;
+		if (mode === "favorites") {
+			favoritesScrollY = 0;
+		}
+		// Ocultar globo
 			select("#globe-container").style("display", "none");
 
-			// Limpiar selección de país
-			clearSelectedCountry();
+		// Limpiar selección de país
+		clearSelectedCountry();
 
-			// Detener audio actual
-			if (currentAudio) {
-				currentAudio.stop();
-				currentAudio.remove();
-			}
-			currentAudio = null;
-			currentSongInfo = null;
-			albumArt = null;
-			flagImg = null;
-			isPlaying = false;
-			selectAll(".musicFrame").forEach(f => f.remove());
-		} else {
-			mode = "normal";
-
-			// Mostrar globo
+		// Detener audio actual
+		if (currentAudio) {
+			currentAudio.stop();
+			currentAudio.remove();
+		}
+		currentAudio = null;
+		currentSongInfo = null;
+		albumArt = null;
+		flagImg = null;
+		isPlaying = false;
+		selectAll(".musicFrame").forEach(f => f.remove());
+	} else {
+		mode = "normal";
+		// Mostrar globo
 			select("#globe-container").style("display", "block");
 
 			// Reset del reproductor al salir de favoritos
@@ -200,8 +213,8 @@ function drawMenuBar() {
 			albumArt = null;
 			flagImg = null;
 			isPlaying = false;
-		}
-	});
+	}
+
 }
 
 function drawModeItem(label, x, y, active, onClick) {
@@ -412,6 +425,73 @@ function truncateText(text, maxWidth, fontSize) {
 	}
 	return truncated + "...";
 }
+
+function drawHelpUI() {
+    const contentY = menuHeight;
+    const contentHeight = height - menuHeight - playerHeight;
+
+    // Fondo
+    fill(30, 30, 35);
+    rect(0, contentY, width, contentHeight);
+
+    // Título
+    fill(255);
+    textAlign(CENTER, TOP);
+    textSize(32);
+    textStyle(BOLD);
+    text("Comandos de Voz", width / 2, contentY + 30);
+
+    textStyle(NORMAL);
+    textSize(18);
+    fill(220);
+
+    let y = contentY + 100;
+    const lineGap = 36;
+
+    drawHelpSection("Reproducción", [
+        "▶ play / reproducir / pon música",
+        "⏸ pausa / parar / stop",
+		"⏭ siguiente / next",
+		"⏮ anterior / previous",
+		"★ añadir a favoritos",
+        "☆ quitar de favoritos"
+    ], y);
+
+    y += lineGap * 6;
+
+    drawHelpSection("Navegación", [
+        "🗺 ir a España",
+        "🗺 quiero Argentina",
+        "🗺 México",
+        "📂 favoritos",
+        "🏠 modo normal"
+    ], y);
+	
+    y += lineGap * 6;
+
+    drawHelpSection("Control", [
+        "Control por voz solo funciona en modo voz",
+        "Habla claro y espera un segundo entre comandos"
+    ], y);
+}
+
+function drawHelpSection(title, lines, startY) {
+    fill(180, 220, 180);
+    textAlign(LEFT, TOP);
+    textSize(22);
+    textStyle(BOLD);
+    text(title, 80, startY);
+
+    textStyle(NORMAL);
+    textSize(18);
+    fill(220);
+
+    lines.forEach((line, i) => {
+        text("• " + line, 100, startY + 40 + i * 30);
+    });
+}
+
+
 
 function drawPlayerBar() {
 	fill("#2E7D32"); // Verde original

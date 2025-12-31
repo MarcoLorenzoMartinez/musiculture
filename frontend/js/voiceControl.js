@@ -101,7 +101,17 @@ function setupVoiceControl() {
             select("#globe-container").style("display", "block");
             return;
         }
-
+        // Abrir ayuda
+        if (transcript === "ayuda" || transcript === "help") {
+            setMode("help");
+            return;
+        }
+        // Cerrar ayuda / favoritos
+        const closeCommands = ["cerrar", "volver", "salir", "close"];
+        if ((mode === "help" || mode === "favorites") && closeCommands.some(c => transcript.includes(c))) {
+            setMode("normal");
+            return;
+        }
         // ---- BÚSQUEDA DE PAÍS ----
         // Ejemplos: "ir a españa", "quiero argentina", "méxico"
         const countryList = window.loadedCountries || []; // Leemos del globe
