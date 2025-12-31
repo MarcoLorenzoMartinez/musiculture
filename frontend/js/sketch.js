@@ -447,27 +447,13 @@ function drawHelpUI() {
     textSize(18);
     fill(220);
 
-	const startY = contentY + 90;
-    const lineGap = 36;
-    let y = startY - helpScrollY;
-
-    // Altura total estimada del contenido
-    const totalContentHeight = lineGap * 30;
-    maxHelpScroll = max(0, totalContentHeight - contentHeight + 120);
-
-    push();
-    drawingContext.save();
-    drawingContext.beginPath();
-    drawingContext.rect(0, startY, width, contentHeight - 90);
-    drawingContext.clip();
 
 	if (interactionMode === "voiceControl") {
-		drawVoiceHelp(y, lineGap);
+		drawVoiceHelp(contentHeight, contentY);
 	} else if (interactionMode === "handControl") {
 		drawHandHelp(contentY);
 	} else {
-		console.log("Dibujando ayuda general");
-		drawGeneralHelp(y, lineGap);
+		drawGeneralHelp(contentHeight, contentY);
 	}
 }
 
@@ -482,32 +468,47 @@ function drawHelpHeader(contentY) {
 	else if (interactionMode === "handControl") {
 		text("Comandos de Control Gestual", width / 2, contentY + 30);
 	} else if (interactionMode === "voiceControl") {
-		text("Comandos de Voz", width / 2, contentY + 30);
+		text("Control por voz", width / 2, contentY + 30);
 	}
 }
 
-function drawHelpSection(title, lines, startY) {
+function drawHelpSection(title, lines, x, startY) {
     fill(180, 220, 180);
     textAlign(LEFT, TOP);
     textSize(22);
     textStyle(BOLD);
-    text(title, 80, startY);
+    text(title, x, startY);
 
     textStyle(NORMAL);
     textSize(18);
     fill(220);
 
     lines.forEach((line, i) => {
-        text("• " + line, 100, startY + 40 + i * 30);
+        text("• " + line, x + 20, startY + 40 + i * 30);
     });
 }
 
-function drawGeneralHelp(y, lineGap) {
-        drawHelpSection("¿Qué es MUSICULTURE?", [
+function drawGeneralHelp(contentHeight, contentY) {
+	const startY = contentY + 90;
+    const lineGap = 36;
+    let y = startY - helpScrollY;
+	let x = 80;
+
+    // Altura total estimada del contenido
+    const totalContentHeight = lineGap * 30;
+    maxHelpScroll = max(0, totalContentHeight - contentHeight + 120);
+
+    push();
+    drawingContext.save();
+    drawingContext.beginPath();
+    drawingContext.rect(0, startY, width, contentHeight - 90);
+    drawingContext.clip();
+
+	drawHelpSection("¿Qué es MUSICULTURE?", [
         "MUSICULTURE es una app interactiva para descubrir música del mundo",
         "Explora países en el globo y escucha artistas locales",
         "Cada país genera una playlist diferente automáticamente"
-    ], y);
+    ], x, y);
 
     y += lineGap * 4;
 
@@ -518,7 +519,7 @@ function drawGeneralHelp(y, lineGap) {
         "Usa la rueda del ratón para hacer zoom",
 		"Pasa el ratón sobre un país para ver su nombre",
         "Al seleccionar un país, la música comienza automáticamente"
-    ], y);
+    ], x, y);
 
     y += lineGap * 6.5;
 
@@ -529,7 +530,7 @@ function drawGeneralHelp(y, lineGap) {
         "⏭ Siguiente canción",
         "Barra de progreso interactiva",
         "Música asociada al país seleccionado"
-    ], y);
+    ], x, y);
 
     y += lineGap * 6.5;
 
@@ -540,7 +541,7 @@ function drawGeneralHelp(y, lineGap) {
 		"Desde favoritos puedes reproducir una canción haciendo click sobre ella",
 		"Usa el botón ✕ para eliminarla de la lista",
         "Los favoritos se guardan automáticamente"
-    ], y);
+    ], x, y);
 
     y += lineGap * 6.5;
 
@@ -548,7 +549,7 @@ function drawGeneralHelp(y, lineGap) {
         "Modo Normal: ratón y controles clásicos",
         "Modo de Control Gestual: controla la app con gestos de la mano",
         "Modo de Control por Voz: controla la app usando distintos comandos de voz"
-    ], y);
+    ], x, y);
 
     drawingContext.restore();
     pop();
@@ -562,7 +563,71 @@ function drawGeneralHelp(y, lineGap) {
     }
 }
 
+function drawVoiceHelp(contentHeight, contentY) {
 
+    const sections = [
+        {
+            title: "Control del globo",
+            lines: [
+                "gira / rotar / rota → Inicia rotación automática",
+                "no gira / no rotar → Para la rotación automática",
+                "acerca / aumentar / zoom → Amplía el globo",
+                "aleja / reducir → Aleja el globo"
+            ]
+        },
+        {
+            title: "Reproducción de música",
+            lines: [
+                "reproducir / play / empezar → Reproduce la canción",
+                "pausa / stop / parar → Pausa la canción",
+                "siguiente / next / pasar → Siguiente canción",
+                "anterior / previous / volver → Canción anterior"
+            ]
+        },
+        {
+            title: "Favoritos y navegación",
+            lines: [
+                "favoritos → Abrir lista de favoritos",
+                "añadir a favoritos → Añade canción a favoritos",
+                "normal → Volver al modo normal (globo)",
+                "ayuda / help → Abrir ayuda",
+                "cerrar / salir / close → Cerrar ayuda o favoritos"
+            ]
+        },
+        {
+            title: "Búsqueda de países",
+            lines: [
+                "ir a [país] / quiero [país] → Selecciona un país y empieza música",
+                "Ejemplos: 'ir a España', 'quiero Argentina', 'México'"
+            ]
+        },
+        {
+            title: "Consejos",
+            lines: [
+                "Habla claro y espera un segundo entre comandos",
+                "El control por voz solo funciona en este modo",
+                "Se puede combinar con el ratón para girar el globo si es necesario"
+            ]
+        }
+    ];
+
+    const colWidth = width / 2 - 40; // 2 columnas
+    let col = 0;
+    let rowY = contentY + 80;
+
+    sections.forEach(section => {
+        const x = 40 + col * (colWidth + 40);
+
+        drawHelpSection(section.title, section.lines, x, rowY);
+
+        // Salto a siguiente columna si hay demasiadas líneas
+        rowY += section.lines.length * 30 + 50;
+        if (rowY > contentHeight - 100) {
+            col++;
+            rowY = contentY + 80;
+        }
+    });
+}
 
 
 function drawPlayerBar() {
