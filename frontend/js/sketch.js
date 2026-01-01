@@ -3,7 +3,8 @@
 	 barra verde superior con logo, globo D3 y barra inferior tipo reproductor.
 */
 
-let mode = "normal"; // "normal" o "favorites"
+let mode = "normal"; // "normal" / "favorites" / "help"
+let interactionMode = "normal"; // "normal", "handControl" o "voiceControl"
 
 let menuHeight = 70; // Altura de la barra superior
 let playerHeight = 100; // Altura de la barra inferior
@@ -27,6 +28,10 @@ let favoriteFlagImgs = {}; // Cache de banderas de favoritos
 // Scroll de favoritos
 let favoritesScrollY = 0;
 let maxFavoritesScroll = 0;
+
+// Scroll de ayuda	
+let helpScrollY = 0;
+let maxHelpScroll = 0;
 
 function preload() {
 	logoImg = loadImage("frontend/assets/completo_sinFondo.png");
@@ -54,21 +59,6 @@ function setup() {
 			console.log("No se encontró el ID de Wikidata para el país:", countryName);
 		}
 	});
-
-	// Botón para activar modo de control manual
-	let gestureButton = createButton("Activar control por manos");
-	gestureButton.position(20, menuHeight + 10);
-	gestureButton.mousePressed(() => {
-		handControlActive = !handControlActive;
-		if (handControlActive) {
-			setupHandControl();
-			autoRotate = false; // Detener rotación al activar
-		} else {
-			autoRotate = true;	// Reanudar rotación al desactivar
-			removeCenterMarker(); // Quitar marcador central
-		}
-		gestureButton.html(handControlActive ? "🚫 Desactivar control por manos" : "🖐 Activar control por manos");
-	});
 }
 
 function draw() {
@@ -85,6 +75,8 @@ function draw() {
 		drawHandControl();
 	} else if (mode === "favorites") {
 		drawFavoritesUI();
+	} else if (mode === "help") {
+		drawHelpUI();
 	}
 }
 
@@ -103,37 +95,85 @@ function drawMenuBar() {
 	rect(x - 5, y - 5, logoWidth + 10, logoHeight + 10, 8);
 	image(logoImg, x, y, logoWidth, logoHeight);
 
+	// Modos de juego
+	const baseY = menuHeight / 2;
+	const startX = 230;
+	const spacing = 150;
+
+	drawModeItem(
+	"Normal",
+	startX,
+	baseY,
+	interactionMode === "normal",
+	() => setInteractionMode("normal")
+	);
+
+	drawSeparator(startX + spacing / 2, 15, menuHeight - 15);
+
+	drawModeItem(
+	"Control Gestual",
+	startX + spacing,
+	baseY,
+	interactionMode === "handControl",
+	() => setInteractionMode("handControl")
+	);
+
+	drawSeparator(startX + spacing * 3/2, 15, menuHeight - 15);
+
+	drawModeItem(
+	"Control por Voz",
+	startX + spacing * 2,
+	baseY,
+	interactionMode === "voiceControl",
+	() => setInteractionMode("voiceControl")
+	);
+
 	// Icono de favoritos en la barra superior
 	const favIconSize = 40;
 	const favX = width - 60;
 	const favY = menuHeight / 2;
 
 	drawIcon(mode === "favorites" ? "✕" : "★", favX, favY, favIconSize, () => {
-		if (mode === "normal") {
-			mode = "favorites";
-			favoritesScrollY = 0;
+		setMode("favorites");
+	});
 
-			// Ocultar globo
+	// Icono de ayuda
+	drawModeItem(
+		"Help", width - 120, baseY, mode === "help",
+		() => setMode("help")
+	);
+}
+
+function setMode(newMode) {
+	if (mode === "normal") {
+		mode = newMode;
+		// Reiniciamos scrolls
+		if (mode === "favorites") {
+			favoritesScrollY = 0;
+		}
+		if (mode === "help") {
+			helpScrollY = 0;
+		}
+		// Ocultar globo
 			select("#globe-container").style("display", "none");
 
-			// Limpiar selección de país
-			clearSelectedCountry();
+		// Limpiar selección de país
+		clearSelectedCountry();
 
-			// Detener audio actual
-			if (currentAudio) {
-				currentAudio.stop();
-				currentAudio.remove();
-			}
-			currentAudio = null;
-			currentSongInfo = null;
-			albumArt = null;
-			flagImg = null;
-			isPlaying = false;
-			selectAll(".musicFrame").forEach(f => f.remove());
-		} else {
-			mode = "normal";
-
-			// Mostrar globo
+		// Detener audio actual
+		if (currentAudio) {
+			currentAudio.stop();
+			currentAudio.remove();
+		}
+		currentAudio = null;
+		currentSongInfo = null;
+		albumArt = null;
+		flagImg = null;
+		isPlaying = false;
+		selectAll(".musicFrame").forEach(f => f.remove());
+	} else {
+		mode = "normal";
+		// Mostrar globo
 			select("#globe-container").style("display", "block");
 
 			// Reset del reproductor al salir de favoritos
@@ -146,8 +186,40 @@ function drawMenuBar() {
 			albumArt = null;
 			flagImg = null;
 			isPlaying = false;
-		}
-	});
+	}
+
+}
+
+function drawModeItem(label, x, y, active, onClick) {
+  const w = textWidth(label) + 20;
+  const hover = mouseX > x - w / 2 && mouseX < x + w / 2 &&
+                mouseY > y - 15 && mouseY < y + 15;
+
+  if (active) {
+    fill("#A5D6A7");
+  } else if (hover) {
+    fill(220);
+  } else {
+    fill(255);
+  }
+
+  textAlign(CENTER, CENTER);
+  textSize(18);
+  textStyle(active ? BOLD : NORMAL);
+  text(label, x, y);
+
+  if (mouseIsPressed && hover && !controlCooldown) {
+    controlCooldown = true;
+    onClick();
+    setTimeout(() => controlCooldown = false, COOLDOWN_TIME);
+  }
+}
+
+function drawSeparator(x, yTop, yBottom) {
+  stroke(255, 120);
+  strokeWeight(2);
+  line(x, yTop, x, yBottom);
+  noStroke();
 }
 
 function drawFavoritesUI() {
@@ -324,8 +396,253 @@ function truncateText(text, maxWidth, fontSize) {
 	return truncated + "...";
 }
 
+function drawHelpUI() {
+	const contentY = menuHeight;
+    const contentHeight = height - menuHeight - playerHeight;
+
+    // Fondo
+    fill(30, 30, 35);
+    rect(0, contentY, width, contentHeight);
+
+    // Título
+    drawHelpHeader(contentY);
+
+    textStyle(NORMAL);
+    textSize(18);
+    fill(220);
+
+
+	if (interactionMode === "voiceControl") {
+		drawVoiceHelp(contentHeight, contentY);
+	} else if (interactionMode === "handControl") {
+		drawHandHelp(contentHeight, contentY);
+	} else {
+		drawGeneralHelp(contentHeight, contentY);
+	}
+}
+
+function drawHelpHeader(contentY) {
+	fill(255);
+    textAlign(CENTER, TOP);
+    textSize(32);
+    textStyle(BOLD);
+	if (interactionMode === "normal") {
+		text("Uso de la aplicación", width / 2, contentY + 30);
+	}
+	else if (interactionMode === "handControl") {
+		text("Comandos de Control Gestual", width / 2, contentY + 30);
+	} else if (interactionMode === "voiceControl") {
+		text("Control por voz", width / 2, contentY + 30);
+	}
+}
+
+function drawHelpSection(title, lines, x, startY) {
+    fill(180, 220, 180);
+    textAlign(LEFT, TOP);
+    textSize(22);
+    textStyle(BOLD);
+    text(title, x, startY);
+
+    textStyle(NORMAL);
+    textSize(18);
+    fill(220);
+
+    lines.forEach((line, i) => {
+        text("• " + line, x + 20, startY + 40 + i * 30);
+    });
+}
+
+function drawGeneralHelp(contentHeight, contentY) {
+	const startY = contentY + 90;
+    const lineGap = 36;
+    let y = startY - helpScrollY;
+	let x = 80;
+
+    // Altura total estimada del contenido
+    const totalContentHeight = lineGap * 30;
+    maxHelpScroll = max(0, totalContentHeight - contentHeight + 120);
+
+    push();
+    drawingContext.save();
+    drawingContext.beginPath();
+    drawingContext.rect(0, startY, width, contentHeight - 90);
+    drawingContext.clip();
+
+	drawHelpSection("¿Qué es MUSICULTURE?", [
+        "MUSICULTURE es una app interactiva para descubrir música del mundo",
+        "Explora países en el globo y escucha artistas locales",
+        "Cada país genera una playlist diferente automáticamente"
+    ], x, y);
+
+    y += lineGap * 4;
+
+    drawHelpSection("Explorar países", [
+        "Haz click sobre un país en el globo",
+        "El globo gira automáticamente hasta que interactúas",
+        "Mantén pulsado el botón izquierdo del ratón y arrastra para rotar el globo",
+        "Usa la rueda del ratón para hacer zoom",
+		"Pasa el ratón sobre un país para ver su nombre",
+        "Al seleccionar un país, la música comienza automáticamente"
+    ], x, y);
+
+    y += lineGap * 6.5;
+
+    drawHelpSection("Reproductor de música", [
+        "▶ Reproducir",
+        "⏸ Pausar",
+        "⏮ Canción anterior",
+        "⏭ Siguiente canción",
+        "Barra de progreso interactiva",
+        "Música asociada al país seleccionado"
+    ], x, y);
+
+    y += lineGap * 6.5;
+
+    drawHelpSection("Favoritos", [
+        "★ Añadir la canción actual a favoritos",
+        "☆ Quitar la canción actual de favoritos",
+        "Pulsa el icono ★ (esquina superior derecha) para abrir la lista de favoritos",
+		"Desde favoritos puedes reproducir una canción haciendo click sobre ella",
+		"Usa el botón ✕ para eliminarla de la lista",
+        "Los favoritos se guardan automáticamente"
+    ], x, y);
+
+    y += lineGap * 6.5;
+
+    drawHelpSection("Modos de interacción", [
+        "Modo Normal: ratón y controles clásicos",
+        "Modo de Control Gestual: controla la app con gestos de la mano",
+        "Modo de Control por Voz: controla la app usando distintos comandos de voz"
+    ], x, y);
+
+    drawingContext.restore();
+    pop();
+
+    // Indicador de scroll
+    if (maxHelpScroll > 0) {
+        fill(150);
+        textSize(14);
+        textAlign(CENTER, BOTTOM);
+        text("↕ Usa la rueda del ratón para desplazarte", width / 2, height - playerHeight - 10);
+    }
+}
+
+function drawVoiceHelp(contentHeight, contentY) {
+
+    const sections = [
+        {
+            title: "Control del globo",
+            lines: [
+                "gira / rotar / rota → Inicia rotación automática",
+                "no gira / no rotar → Para la rotación automática",
+                "acerca / aumentar / zoom → Amplía el globo",
+                "aleja / reducir → Aleja el globo"
+            ]
+        },
+        {
+            title: "Reproducción de música",
+            lines: [
+                "reproducir / play / empezar → Reproduce la canción",
+                "pausa / stop / parar → Pausa la canción",
+                "siguiente / next / pasar → Siguiente canción",
+                "anterior / previous / volver → Canción anterior"
+            ]
+        },
+        {
+            title: "Favoritos y navegación",
+            lines: [
+                "favoritos → Abrir lista de favoritos",
+                "añadir a favoritos → Añade canción a favoritos",
+                "normal → Volver al modo normal (globo)",
+                "ayuda / help → Abrir ayuda",
+                "cerrar / salir / close → Cerrar ayuda o favoritos"
+            ]
+        },
+        {
+            title: "Búsqueda de países",
+            lines: [
+                "ir a [país] / quiero [país] → Selecciona un país y empieza música",
+                "Ejemplos: 'ir a España', 'quiero Argentina', 'México'"
+            ]
+        },
+        {
+            title: "Consejos",
+            lines: [
+                "Habla claro y espera un segundo entre comandos",
+                "El control por voz solo funciona en este modo",
+                "Se puede combinar con el ratón para girar el globo si es necesario"
+            ]
+        }
+    ];
+
+    const colWidth = width / 2 - 40; // 2 columnas
+    let col = 0;
+    let rowY = contentY + 80;
+
+    sections.forEach(section => {
+        const x = 40 + col * (colWidth + 40);
+
+        drawHelpSection(section.title, section.lines, x, rowY);
+
+        // Salto a siguiente columna si hay demasiadas líneas
+        rowY += section.lines.length * 30 + 50;
+        if (rowY > contentHeight - 100) {
+            col++;
+            rowY = contentY + 80;
+        }
+    });
+}
+
+function drawHandHelp(contentHeight, contentY) {
+
+    const sections = [
+        {
+            title: "Rotación del globo",
+            lines: [
+                "Mano derecha → mover el globo",
+                "Mantén el dedo índice y mueve la mano para rotar",
+                "El globo no rota automáticamente en este modo"
+            ]
+        },
+        {
+            title: "Seleccionar país (clic central)",
+            lines: [
+                "Mano izquierda → hacer puño para clic central",
+                "El clic selecciona el país centrado en el globo",
+                "Se reproduce automáticamente la música del país seleccionado",
+                "Animación rápida en el punto rojo indica que se ha seleccionado"
+            ]
+        },
+        {
+            title: "Teclado y consejos",
+            lines: [
+                "Tecla 'C' → simula un clic central (opcional)",
+                "Se recomienda usar ambas manos: derecha para rotar, izquierda para seleccionar",
+                "Evita mover demasiado rápido la mano para una detección precisa",
+                "El recuadro de cámara muestra la posición de tus manos"
+            ]
+        }
+    ];
+
+    const colWidth = width / 2 - 40; // hasta 2 columnas
+    let col = 0;
+    let rowY = contentY + 80;
+
+    sections.forEach(section => {
+        const x = 40 + col * (colWidth + 40);
+
+        drawHelpSection(section.title, section.lines, x, rowY);
+
+        rowY += section.lines.length * 30 + 50;
+        if (rowY > contentHeight - 100) {
+            col++;
+            rowY = contentY + 80;
+        }
+    });
+}
+
 function drawPlayerBar() {
-	fill("#2E7D32"); // Verde original
+	fill("#2E7D32");
 	rect(0, height - playerHeight, width, playerHeight);
 
 	if (!currentSongInfo) return;
@@ -417,6 +734,7 @@ function drawPlayerBar() {
 }
 
 function drawIcon(symbol, x, y, baseSize, onClick) {
+	textStyle(NORMAL);
 	const hover = dist(mouseX, mouseY, x, y) < baseSize * 0.8; // detectar hover
 	let iconSize = baseSize;
 
@@ -457,6 +775,11 @@ function mouseWheel(event) {
 		favoritesScrollY = constrain(favoritesScrollY + event.delta * 0.5, 0, maxFavoritesScroll);
 		return false; // Prevenir scroll de página
 	}
+	if (mode === "help" && maxHelpScroll > 0) {
+        helpScrollY += event.delta;
+        helpScrollY = constrain(helpScrollY, 0, maxHelpScroll);
+        return false;
+    }
 }
 
 function windowResized() {
@@ -465,6 +788,31 @@ function windowResized() {
 	globeDiv.position(0, menuHeight);
 	globeDiv.size(windowWidth, windowHeight - menuHeight - playerHeight);
 	resizeGlobe(windowWidth, windowHeight - menuHeight - playerHeight);
+}
+
+function setInteractionMode(mode) {
+	if (interactionMode === mode) return;
+
+	// Apagar todo primero
+	autoRotate = true; // Reanudar rotación automática
+	if (interactionMode === "handControl") {
+		cleanupHandControl();
+	}
+	if (interactionMode === "voiceControl") {
+		recognition.stop();
+		voiceActive = false;
+	}
+
+	// Activar el nuevo modo
+	interactionMode = mode;
+
+	if (interactionMode === "handControl") {
+		handControlActive = true;
+		setupHandControl();
+	} else if (interactionMode === "voiceControl") {
+		setupVoiceControl();
+		recognition.start();
+	}
 }
 
 
@@ -518,6 +866,7 @@ async function loadMusicForCountry(wikidataId, countryName) {
 	currentFlagISO = iso3to2(getSelectedCountryID());
 	flagImg = null;
 	if (currentFlagISO) {
+		console.log("Cargando bandera para país:", countryName, currentFlagISO);
 		const flagUrl = `https://flagcdn.com/w40/${currentFlagISO}.png`;
 		loadImage(flagUrl, img => flagImg = img);
 	}

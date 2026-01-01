@@ -43,6 +43,10 @@ function setupHandControl() {
 function cleanupHandControl() {
   // Eliminar el punto central del SVG
   removeCenterMarker();
+  handControlActive = false;
+  autoRotate = true;
+
+  console.log("Control por gestos desactivado");
 
   // Detener los modelos si es necesario
   if (handPose) {
@@ -247,6 +251,12 @@ function performCenterClick() {
 
   if (centeredCountry) {
     console.log("Puño detectado ->", centeredCountry.properties.name);
+
+    // Buscar el país por nombre
+    const country = window.loadedCountries.find(c => c.properties.name.toLowerCase() === centeredCountry.properties.name.toLowerCase());
+    if (!country) return;
+
+    selectedCountry = country;
 
     // Resaltar país seleccionado
     d3.selectAll(".country").classed("country-selected", d =>
