@@ -607,7 +607,7 @@ function drawVoiceHelp(contentHeight, contentY) {
             lines: [
                 "Habla claro y espera un segundo entre comandos",
                 "El control por voz solo funciona en este modo",
-                "Se puede combinar con el ratón para girar el globo si es necesario"
+                "Se puede combinar con el ratón para interactuar con el globo si es necesario"
             ]
         }
     ];
