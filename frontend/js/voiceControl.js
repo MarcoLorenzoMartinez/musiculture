@@ -65,7 +65,8 @@ function setupVoiceControl() {
         const playCommands = ["reproducir", "reproduce", "empieza", "empezar", "arranca", "arrancar",
             "reanuda", "reanudar", "continuar", "continua",
              "play", "pon musica","start", "resume"];
-        if (playCommands.some(cmd => transcript.includes(cmd))) {
+        // Tiene que ser exacto para evitar conflictos con otros comandos
+        if (playCommands.some(cmd => transcript === cmd)) {
             if (currentAudio) currentAudio.play();
             return;
         }
@@ -85,10 +86,28 @@ function setupVoiceControl() {
         }
         // Abrir favoritos
         if (transcript === "favoritos") {
-            mode = "favorites";
-            select("#globe-container").style("display", "none");
+            setMode("favorites");
             return;
         }
+        // Reproducir canción específica en favoritos
+        if (mode === "favorites" && transcript.startsWith("reproducir")) {
+            const index = parseIndexFromSpeech(transcript);
+
+            if (index && favorites[index - 1]) {
+                playFavorite(favorites[index - 1]);
+            }
+            return;
+        }
+        // Eliminar canción específica de favoritos
+        if (mode === "favorites" && transcript.startsWith("eliminar")) {
+            const index = parseIndexFromSpeech(transcript);
+
+            if (index && favorites[index - 1]) {
+                removeFavorite(favorites[index - 1].id);
+            }
+            return;
+        }
+
         // Añadir a favoritos
         const favCommands = ["me gusta", "anadir a favoritos", "favorito"];
         if (favCommands.some(cmd => transcript.includes(cmd))) {
@@ -177,6 +196,46 @@ function focusCountryByName(countryName) {
     // Resaltar el país
     svg.selectAll(".country").classed("country-selected", d => d === country);
 }
+
+function parseIndexFromSpeech(text) {
+    // El texto ya está en minúsculas y sin acentos
+    // Número en dígitos
+    const digitMatch = text.match(/\b\d+\b/);
+    if (digitMatch) return parseInt(digitMatch[0], 10);
+
+    // Número en palabras
+    const numbers = {
+        uno: 1,
+        dos: 2,
+        tres: 3,
+        cuatro: 4,
+        cinco: 5,
+        seis: 6,
+        siete: 7,
+        ocho: 8,
+        nueve: 9,
+        diez: 10,
+        once: 11,
+        doce: 12,
+        trece: 13,
+        catorce: 14,
+        quince: 15,
+        dieciseis: 16,
+        diecisiete: 17,
+        dieciocho: 18,
+        diecinueve: 19,
+        veinte: 20
+    };
+
+    for (const word in numbers) {
+        if (text.includes(word)) {
+            return numbers[word];
+        }
+    }
+
+    return null;
+}
+
 
 
 // Diccionario español/aliases a nombre en inglés
