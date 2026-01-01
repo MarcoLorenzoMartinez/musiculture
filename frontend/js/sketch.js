@@ -59,42 +59,7 @@ function setup() {
 			console.log("No se encontró el ID de Wikidata para el país:", countryName);
 		}
 	});
-
-	// // Botón para activar modo de control manual
-	// let gestureButton = createButton("Activar control por manos");
-	// gestureButton.position(20, menuHeight + 10);
-	// gestureButton.mousePressed(() => {
-	// 	handControlActive = !handControlActive;
-	// 	if (handControlActive) {
-	// 		setupHandControl();
-	// 		autoRotate = false; // Detener rotación al activar
-	// 	} else {
-	// 		cleanupHandControl();
-	// 	}
-	// 	gestureButton.html(handControlActive ? "🚫 Desactivar control por manos" : "🖐 Activar control por manos");
-	// });
-
-	// // Botón para activar/desactivar control por voz
-	// addVoiceButton();
 }
-
-// function addVoiceButton() {
-// 	let voiceBtn = createButton("🎤 Activar voz");
-//     voiceBtn.position(20, menuHeight + 50);
-
-//     voiceBtn.mousePressed(() => {
-//         voiceActive = !voiceActive;
-
-//         if (voiceActive) {
-//             setupVoiceControl();
-//             recognition.start();
-//             voiceBtn.html("🛑 Desactivar voz");
-//         } else {
-//             recognition.stop();
-//             voiceBtn.html("🎤 Activar voz");
-//         }
-//     });
-// }
 
 function draw() {
 	background(20);
@@ -241,7 +206,6 @@ function drawModeItem(label, x, y, active, onClick) {
   textAlign(CENTER, CENTER);
   textSize(18);
   textStyle(active ? BOLD : NORMAL);
-//   textStyle(BOLD);
   text(label, x, y);
 
   if (mouseIsPressed && hover && !controlCooldown) {
@@ -678,7 +642,7 @@ function drawHandHelp(contentHeight, contentY) {
 }
 
 function drawPlayerBar() {
-	fill("#2E7D32"); // Verde original
+	fill("#2E7D32");
 	rect(0, height - playerHeight, width, playerHeight);
 
 	if (!currentSongInfo) return;
@@ -902,6 +866,7 @@ async function loadMusicForCountry(wikidataId, countryName) {
 	currentFlagISO = iso3to2(getSelectedCountryID());
 	flagImg = null;
 	if (currentFlagISO) {
+		console.log("Cargando bandera para país:", countryName, currentFlagISO);
 		const flagUrl = `https://flagcdn.com/w40/${currentFlagISO}.png`;
 		loadImage(flagUrl, img => flagImg = img);
 	}

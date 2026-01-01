@@ -252,6 +252,12 @@ function performCenterClick() {
   if (centeredCountry) {
     console.log("Puño detectado ->", centeredCountry.properties.name);
 
+    // Buscar el país por nombre
+    const country = window.loadedCountries.find(c => c.properties.name.toLowerCase() === centeredCountry.properties.name.toLowerCase());
+    if (!country) return;
+
+    selectedCountry = country;
+
     // Resaltar país seleccionado
     d3.selectAll(".country").classed("country-selected", d =>
       d.properties.name === centeredCountry.properties.name
