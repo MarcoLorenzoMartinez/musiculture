@@ -46,7 +46,7 @@ function setupVoiceControl() {
             return;
         }
         // Alejar globo
-        const zoomOutCommands = ["aleja", "alejar", "lejos", "desampliar", "reduce", "reducir"];
+        const zoomOutCommands = ["aleja", "alejar", "lejos", "reduce", "reducir", "disminuye", "disminuir"];
         if (zoomOutCommands.some(cmd => transcript.includes(cmd))) {
             currentScale *= 0.8;
             currentScale = Math.max(150, currentScale);
@@ -70,14 +70,14 @@ function setupVoiceControl() {
             return;
         }
         // Siguiente canción
-        const nextCommands = ["siguiente", "cambia", "cambiar", "pasa", "pasar", "next", "skip", "change", "switch"];
+        const nextCommands = ["siguiente", "cambia", "cambiar", "pasa", "pasar", "next", "skip", "change"];
         if (nextCommands.some(cmd => transcript.includes(cmd))) {
             if (currentAudio)
                 nextSong();
             return;
         }
         // Canción anterior
-        const prevCommands = ["anterior", "vuelve", "volver", "regresa", "regresar", "previous", "back"];
+        const prevCommands = ["anterior", "vuelve", "volver", "regresa", "regresar"];
         if (prevCommands.some(cmd => transcript.includes(cmd))) {
             if (currentAudio)
                 previousSong();
@@ -95,10 +95,14 @@ function setupVoiceControl() {
             toggleFavorite();
             return;
         }
-        // Modo normal (globo)
+        // Modo normal (ratón)
         if (transcript.includes("normal")) {
-            mode = "normal";
-            select("#globe-container").style("display", "block");
+            setInteractionMode("normal");
+            return;
+        }
+        // Modo control por gestos
+        if (transcript.includes("control gestual")) {
+            setInteractionMode("handControl");
             return;
         }
         // Abrir ayuda
