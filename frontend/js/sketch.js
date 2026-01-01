@@ -551,7 +551,7 @@ function drawVoiceHelp(contentHeight, contentY) {
         {
             title: "Favoritos y navegación",
             lines: [
-                "favoritos → Abrir lista de favoritos",
+				"favoritos → Abrir lista de favoritos",
                 "añadir a favoritos / favorito / me gusta → Añade / quita canción de favoritos",
                 "ayuda / help → Abrir ayuda",
                 "cerrar / volver / salir / close → Cerrar ayuda o favoritos",
@@ -559,10 +559,18 @@ function drawVoiceHelp(contentHeight, contentY) {
 				"control gestual → Cambiar al modo de control por gestos"
             ]
         },
+		{
+            title: "Pestaña de favoritos",
+            lines: [
+				"Reproducir [número] → Reproduce la canción indicada de tu lista de favoritos (ej. «Reproducir 3»)",
+				"Eliminar [número] → Elimina la canción indicada de tu lista de favoritos (ej. «Eliminar 2»)",
+				"Cerrar / Volver / Salir / Close → Salir de favoritos"
+            ]
+        },
         {
             title: "Búsqueda de países",
             lines: [
-                "ir a [país] / quiero [país] → Selecciona un país y empieza música",
+                "ir a [país] / quiero [país] → Selecciona un país y reproduce música de ese país",
                 "Ejemplos: 'ir a España', 'quiero Argentina', 'México'"
             ]
         },
