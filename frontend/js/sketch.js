@@ -588,7 +588,7 @@ function drawVoiceHelp(contentHeight, contentY) {
             title: "Favoritos y navegación",
             lines: [
                 "favoritos → Abrir lista de favoritos",
-                "añadir a favoritos → Añade canción a favoritos",
+                "añadir a favoritos / favorito / me gusta → Añade / quita canción de favoritos",
                 "ayuda / help → Abrir ayuda",
                 "cerrar / volver / salir / close → Cerrar ayuda o favoritos",
                 "normal → Volver al modo normal (globo)",

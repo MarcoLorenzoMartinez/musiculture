@@ -84,13 +84,13 @@ function setupVoiceControl() {
             return;
         }
         // Abrir favoritos
-        if (transcript.includes("favoritos")) {
+        if (transcript === "favoritos") {
             mode = "favorites";
             select("#globe-container").style("display", "none");
             return;
         }
         // Añadir a favoritos
-        const favCommands = ["hola"];
+        const favCommands = ["me gusta", "anadir a favoritos", "favorito"];
         if (favCommands.some(cmd => transcript.includes(cmd))) {
             toggleFavorite();
             return;
