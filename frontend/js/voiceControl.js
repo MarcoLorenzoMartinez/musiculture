@@ -66,7 +66,7 @@ function setupVoiceControl() {
         // Parar canción
         const pauseCommands = ["pausa", "pausar", "detener", "para", "parar", "parate", "detente", "pause", "stop", "halt", "hold"];
         if (pauseCommands.some(cmd => transcript.includes(cmd))) {
-            if (currentAudio) currentAudio.pause();
+            togglePlay();
             return;
         }
         // Reproducir canción
@@ -75,7 +75,7 @@ function setupVoiceControl() {
              "play", "pon musica","start", "resume"];
         // Tiene que ser exacto para evitar conflictos con otros comandos
         if (playCommands.some(cmd => transcript === cmd)) {
-            if (currentAudio) currentAudio.play();
+            togglePlay();
             return;
         }
         // Siguiente canción
