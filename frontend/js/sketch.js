@@ -145,7 +145,11 @@ function drawMenuBar() {
 }
 
 function setMode(newMode) {
-	if (mode === "normal") {
+	if (mode === newMode) {
+		mode = "normal";
+		select("#globe-container").style("display", "block");
+		resetPlayer();
+	} else {
 		mode = newMode;
 		// Reiniciamos scrolls
 		if (mode === "favorites") {
@@ -155,39 +159,28 @@ function setMode(newMode) {
 			helpScrollY = 0;
 		}
 		// Ocultar globo
-			select("#globe-container").style("display", "none");
+		select("#globe-container").style("display", "none");
 
 		// Limpiar selección de país
 		clearSelectedCountry();
 
-		// Detener audio actual
-		if (currentAudio) {
-			currentAudio.stop();
-			currentAudio.remove();
-		}
-		currentAudio = null;
-		currentSongInfo = null;
-		albumArt = null;
-		flagImg = null;
-		isPlaying = false;
-		selectAll(".musicFrame").forEach(f => f.remove());
-	} else {
-		mode = "normal";
-		// Mostrar globo
-			select("#globe-container").style("display", "block");
-
-			// Reset del reproductor al salir de favoritos
-			if (currentAudio) {
-				currentAudio.stop();
-				currentAudio.remove();
-			}
-			currentAudio = null;
-			currentSongInfo = null;
-			albumArt = null;
-			flagImg = null;
-			isPlaying = false;
+		// Detener audio actual (si hay)
+		resetPlayer();
 	}
+}
 
+function resetPlayer() {
+	if (currentAudio) {
+        currentAudio.stop();
+        currentAudio.remove();
+    }
+    currentAudio = null;
+    currentSongInfo = null;
+    albumArt = null;
+    flagImg = null;
+    isPlaying = false;
+
+    selectAll(".musicFrame").forEach(f => f.remove());
 }
 
 function drawModeItem(label, x, y, active, onClick) {
@@ -595,7 +588,7 @@ function drawVoiceHelp(contentHeight, contentY) {
 
         // Salto a siguiente columna si hay demasiadas líneas
         rowY += section.lines.length * 30 + 50;
-        if (rowY > contentHeight - 100) {
+        if (rowY > contentHeight - 200) {
             col++;
             rowY = contentY + 80;
         }
