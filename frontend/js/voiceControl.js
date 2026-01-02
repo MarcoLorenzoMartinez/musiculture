@@ -4,6 +4,13 @@
 let voiceActive = false;
 let recognition;
 
+function speak(text) {
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'es-ES'; // idioma
+    window.speechSynthesis.speak(utterance);
+}
+
+
 function setupVoiceControl() {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) {
@@ -26,7 +33,6 @@ function setupVoiceControl() {
         // ---- COMANDOS DE CONTROL ----
         // Parar rotación automática del globo
         const stopRotateCommands = ["no girar", "no gira", "no giro", "no rotar", "no rota"];
-        "no girar", "no giro", "no gira", "no rotar", "no rota"
         if (stopRotateCommands.some(cmd => transcript === cmd)) {
             autoRotate = false;
             return;
@@ -97,6 +103,8 @@ function setupVoiceControl() {
 
             if (index && favorites[index - 1]) {
                 playFavorite(favorites[index - 1]);
+            } else{
+                speak("Ese número no es válido en la lista de favoritos");
             }
             return;
         }
@@ -106,6 +114,8 @@ function setupVoiceControl() {
 
             if (index && favorites[index - 1]) {
                 removeFavorite(favorites[index - 1].id);
+            } else {
+                speak("Ese número no es válido en la lista de favoritos");
             }
             return;
         }
@@ -137,21 +147,33 @@ function setupVoiceControl() {
             setMode("normal");
             return;
         }
+        // País aleatorio
+        if (transcript === "aleatorio" || transcript === "random") {
+            selectRandomCountry();
+            return;
+        }
         // ---- BÚSQUEDA DE PAÍS ----
         // Ejemplos: "ir a españa", "quiero argentina", "méxico"
-        const countryList = window.loadedCountries || []; // Leemos del globe
+        const countryList = window.loadedCountries.map(c => c.properties.name.toLowerCase()); // Leemos del globo
 
         for (let [alias, countryEnglish] of Object.entries(countryTranslations)) {
-            if (transcript.includes(alias)) {
-                const wikidataId = await getWikidataId(countryEnglish);
-                console.log(wikidataId);
-                if (wikidataId) {
-                    console.log(`Navegando a ${countryEnglish} (${wikidataId}) por comando de voz.`);
-                    loadMusicForCountry(wikidataId, countryEnglish);
-                }
-                focusCountryByName(countryEnglish);
+
+            if (!transcript.includes(alias)) continue;
+            
+            if (!countryList.includes(countryEnglish.toLowerCase())) {
+                console.log(`El país "${countryEnglish}" no está cargado en el globo.`);
+                speak("Ese país no está disponible en el mapa actual");
                 return;
             }
+
+            const wikidataId = await getWikidataId(countryEnglish);
+            console.log(wikidataId);
+            if (wikidataId) {
+                console.log(`Navegando a ${countryEnglish} (${wikidataId}) por comando de voz.`);
+                loadMusicForCountry(wikidataId, countryEnglish);
+            }
+            focusCountryByName(countryEnglish);
+            return;
         }
 
     console.log(transcript);
@@ -161,6 +183,26 @@ function setupVoiceControl() {
         if (voiceActive) recognition.start(); // Reiniciar automáticamente
     };
 }
+
+function selectRandomCountry() {
+    if (!window.loadedCountries || window.loadedCountries.length === 0) return;
+
+    const randomCountry =
+        window.loadedCountries[Math.floor(Math.random() * window.loadedCountries.length)];
+
+    const countryName = randomCountry.properties.name;
+
+    console.log("País aleatorio:", countryName);
+
+    // Centrar el globo
+    focusCountryByName(countryName);
+
+    // Cargar música
+    getWikidataId(countryName).then(id => {
+        if (id) loadMusicForCountry(id, countryName);
+    });
+}
+
 
 function focusCountryByName(countryName) {
     if (!window.loadedCountries) return;

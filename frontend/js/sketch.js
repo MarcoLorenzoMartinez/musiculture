@@ -854,6 +854,8 @@ async function loadMusicForCountry(wikidataId, countryName) {
 		console.warn("No hay artistas disponibles para este país");
 		currentSongInfo = null;
 		playlist = [];
+		// Aviso por voz
+        speak(`Lo siento, no hay artistas disponibles para este país.`);
 		return;
 	}
 
