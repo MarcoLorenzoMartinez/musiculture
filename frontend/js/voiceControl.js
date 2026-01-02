@@ -167,7 +167,6 @@ function setupVoiceControl() {
             }
 
             const wikidataId = await getWikidataId(countryEnglish);
-            console.log(wikidataId);
             if (wikidataId) {
                 console.log(`Navegando a ${countryEnglish} (${wikidataId}) por comando de voz.`);
                 loadMusicForCountry(wikidataId, countryEnglish);
@@ -175,8 +174,6 @@ function setupVoiceControl() {
             focusCountryByName(countryEnglish);
             return;
         }
-
-    console.log(transcript);
     };
 
     recognition.onend = () => {
