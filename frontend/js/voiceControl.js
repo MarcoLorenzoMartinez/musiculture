@@ -11,6 +11,8 @@ function setupVoiceControl() {
         return;
     }
 
+    voiceActive = true;
+
     recognition = new SpeechRecognition();
     recognition.lang = "es-ES";   // Idioma del reconocimiento
     recognition.continuous = true;
