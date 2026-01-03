@@ -5,8 +5,20 @@ let voiceActive = false;
 let recognition;
 
 function speak(text) {
+    // Detener cualquier habla en curso
+    window.speechSynthesis.cancel();
+
+    // Parar la música si está sonando
+    if (currentAudio && isPlaying) {
+        currentAudio.pause();
+        isPlaying = false;
+    }
+
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = 'es-ES'; // idioma
+    utterance.rate = 1;       // velocidad
+    utterance.pitch = 1;      // tono
+
     window.speechSynthesis.speak(utterance);
 }
 
