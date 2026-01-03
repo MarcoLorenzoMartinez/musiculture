@@ -1,6 +1,6 @@
 <!-- index.html -->
 <!-- Página principal de MUSICULTURE: define el entorno p5.js y D3, el globo,
-		 y carga los scripts en el orden correcto (wikidata -> globe -> sketch). -->
+     y carga los scripts en el orden correcto. -->
 
 <!DOCTYPE html>
 <html lang="es">
@@ -25,11 +25,22 @@
 	<!-- El globo de D3 se añadirá dentro de #globe-container. -->
 	<div id="globe-container"></div>
 
-	<!-- Scripts del proyecto -->
+	<!-- Scripts del proyecto en orden de dependencias -->
 	<script src="frontend/js/wikidata.js"></script>
 	<script src="frontend/js/globe.js"></script>
-	<script src="frontend/js/sketch.js"></script>
+	
+	<!-- Módulos de funcionalidad -->
+	<script src="frontend/js/modes.js"></script>
+	<script src="frontend/js/ui.js"></script>
+	<script src="frontend/js/player.js"></script>
+	<script src="frontend/js/favorites.js"></script>
+	<script src="frontend/js/help.js"></script>
+	
+	<!-- Controles especiales -->
 	<script src="frontend/js/gestureControl.js"></script>
 	<script src="frontend/js/voiceControl.js"></script>
+	
+	<!-- Script principal (debe cargarse al final) -->
+	<script src="frontend/js/sketch.js"></script>
 </body>
 </html>
