@@ -8,6 +8,7 @@ let favoriteArtworks = {};
 let favoriteFlagImgs = {};
 let favoritesScrollY = 0;
 let maxFavoritesScroll = 0;
+const MAX_FAVORITES = 20;
 
 function loadFavorites() {
 	const saved = localStorage.getItem("musiculture_favorites");
@@ -53,8 +54,16 @@ function toggleFavorite() {
 		favorites = favorites.filter(f => f.id !== favObj.id);
 		isFavorite = false;
 	} else {
-		favorites.push(favObj);
-		isFavorite = true;
+        // Límite de favoritos
+        if (favorites.length >= MAX_FAVORITES) {
+            console.warn("Máximo de favoritos alcanzado");
+            speak("Has alcanzado el máximo de canciones favoritas.");
+            return;
+        }
+
+        favorites.push(favObj);
+        isFavorite = true;
+
 		if (favObj.artwork && !favoriteArtworks[favObj.id]) {
 			loadImage(favObj.artwork, img => {
 				favoriteArtworks[favObj.id] = img;
@@ -164,6 +173,21 @@ function drawFavoriteCard(fav, x, y, w, h, index) {
 	}
 	rect(x, y, w, h, 8);
 	noStroke();
+
+    // Número de favorito
+    const badgeSize = 22;
+    const badgeX = x - 10;
+    const badgeY = y - 10;
+
+    fill(90, 150, 90);
+    noStroke();
+    rect(badgeX, badgeY, badgeSize, badgeSize, 6);
+
+    fill(255);
+    textAlign(CENTER, CENTER);
+    textSize(12);
+    textStyle(BOLD);
+    text(index + 1, badgeX + badgeSize / 2, badgeY + badgeSize / 2);
 
 	const artSize = 80;
 	const artX = x + 10;
