@@ -104,6 +104,7 @@ function setupVoiceControl() {
             if (index && favorites[index - 1]) {
                 playFavorite(favorites[index - 1]);
             } else{
+                resetPlayer();
                 speak("Ese número no es válido en la lista de favoritos");
             }
             return;
@@ -115,6 +116,7 @@ function setupVoiceControl() {
             if (index && favorites[index - 1]) {
                 removeFavorite(favorites[index - 1].id);
             } else {
+                resetPlayer();
                 speak("Ese número no es válido en la lista de favoritos");
             }
             return;
@@ -162,6 +164,8 @@ function setupVoiceControl() {
             
             if (!countryList.includes(countryEnglish.toLowerCase())) {
                 console.log(`El país "${countryEnglish}" no está cargado en el globo.`);
+                resetPlayer();
+                clearSelectedCountry();
                 speak("Ese país no está disponible en el mapa actual");
                 return;
             }
