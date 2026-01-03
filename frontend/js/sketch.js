@@ -145,29 +145,34 @@ function drawMenuBar() {
 }
 
 function setMode(newMode) {
-	if (mode === newMode) {
-		mode = "normal";
-		select("#globe-container").style("display", "block");
-		resetPlayer();
-	} else {
-		mode = newMode;
-		// Reiniciamos scrolls
-		if (mode === "favorites") {
-			favoritesScrollY = 0;
-		}
-		if (mode === "help") {
-			helpScrollY = 0;
-		}
-		// Ocultar globo
-		select("#globe-container").style("display", "none");
+    if (mode === newMode) {
+        mode = "normal";
+        select("#globe-container").style("display", "block");
+        return;
+    }
 
-		// Limpiar selección de país
-		clearSelectedCountry();
+    mode = newMode;
 
-		// Detener audio actual (si hay)
-		resetPlayer();
-	}
+    // Reiniciar scrolls
+    if (mode === "favorites") {
+        favoritesScrollY = 0;
+    }
+    if (mode === "help") {
+        helpScrollY = 0;
+    }
+
+    // Ocultar globo en modos no normales
+    select("#globe-container").style("display", "none");
+
+    // Solo parar música en favoritos
+    if (mode === "favorites") {
+        clearSelectedCountry();
+        resetPlayer();
+    }
+
+    // En help no se para la música
 }
+
 
 function resetPlayer() {
 	if (currentAudio) {
