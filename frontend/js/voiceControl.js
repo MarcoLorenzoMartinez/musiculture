@@ -136,15 +136,15 @@ function setupVoiceControl() {
 
         // Añadir a favoritos
         const favCommands = ["me gusta", "anadir a favoritos", "favorito"];
-        if (favCommands.some(cmd => transcript.includes(cmd))) {
+        if (favCommands.some(cmd => transcript === cmd)) {
             if (!isFavorite) {
                 toggleFavorite();
             }
             return;
         }
         // Quitar de favoritos
-        const unfavCommands = ["no me gusta", "quitar de favoritos", "quitar favorito", "eliminar de favoritos"];
-        if (unfavCommands.some(cmd => transcript.includes(cmd))) {
+        const unfavCommands = ["no me gusta", "quitar de favoritos", "eliminar favorito", "eliminar de favoritos"];
+        if (unfavCommands.some(cmd => transcript === cmd)) {
             if (isFavorite) {
                 toggleFavorite();
             }
