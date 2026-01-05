@@ -1,18 +1,23 @@
 /* sketch.js (p5.js)
-   Archivo principal de MUSICULTURE - Coordina todos los módulos.
+   Archivo principal que une todos los módulos y gestiona el ciclo de dibujo.
 */
 
+// Preparación inicial del sketch
 function setup() {
+	// Crear el canvas
 	createCanvas(windowWidth, windowHeight);
 	noStroke();
 
+	// Cargar datos iniciales
 	loadFavorites();
 	loadFavoriteImages();
 
+	// Posicionar y dimensionar el globo
 	const globeDiv = select("#globe-container");
 	globeDiv.position(0, menuHeight);
 	globeDiv.size(windowWidth, windowHeight - menuHeight - playerHeight);
 
+	// Inicializar el globo con el callback de clic en país
 	initGlobe(async (countryName) => {
 		const wikidataId = await getWikidataId(countryName);
 		if (wikidataId) {
@@ -23,12 +28,16 @@ function setup() {
 	});
 }
 
+// Bucle de dibujo principal
 function draw() {
+	// Fondo
 	background(20);
 
+	// Dibujar las barras superior e inferior
 	drawMenuBar();
 	drawPlayerBar();
 
+	// Dibujar los contenidos según el modo
 	if (mode === "normal") {
 		drawHandControl();
 	} else if (mode === "favorites") {
@@ -38,6 +47,7 @@ function draw() {
 	}
 }
 
+// Gestión del scroll con la rueda del ratón
 function mouseWheel(event) {
 	if (mode === "favorites") {
 		favoritesScrollY = constrain(favoritesScrollY + event.delta * 0.5, 0, maxFavoritesScroll);
@@ -50,6 +60,7 @@ function mouseWheel(event) {
 	}
 }
 
+// Ajustar el canvas y el globo al redimensionar la ventana
 function windowResized() {
 	resizeCanvas(windowWidth, windowHeight);
 	const globeDiv = select("#globe-container");
