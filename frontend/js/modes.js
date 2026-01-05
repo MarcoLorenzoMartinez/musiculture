@@ -7,6 +7,13 @@ let interactionMode = "normal"; // "normal", "handControl", "voiceControl"
 
 // Cambiar modo de visualización
 function setMode(newMode) {
+	// Si ya está en el modo, volver a normal
+	if (mode === newMode) {
+		mode = "normal";
+		select("#globe-container").style("display", "block");
+		return;
+	}
+
 	// Cambiar al nuevo modo
 	mode = newMode;
 
