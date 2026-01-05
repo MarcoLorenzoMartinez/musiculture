@@ -71,7 +71,7 @@ function drawMenuBar() {
 
 	// Icono de ayuda
 	drawModeItem(
-		"Help", width - 120, baseY, mode === "help",
+		"Ayuda", width - 125, baseY, mode === "help",
 		() => setMode("help")
 	);
 }

@@ -182,7 +182,7 @@ function setupVoiceControl() {
 
         for (let [alias, countryEnglish] of Object.entries(countryTranslations)) {
 
-            if (!transcript.includes(alias)) continue;
+            if (transcript !== alias) continue;
             
             if (!countryList.includes(countryEnglish.toLowerCase())) {
                 console.log(`El país "${countryEnglish}" no está cargado en el globo.`);

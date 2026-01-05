@@ -135,31 +135,31 @@ function drawVoiceHelp(contentHeight, contentY) {
 		{
 			title: "Control del globo",
 			lines: [
-				"gira(r) / giro / rota(r) → Inicia rotación automática",
-				"no gira(r) / no giro / no rota(r) → Para la rotación automática",
-				"acerca(r) / aumenta(r) / amplía(r) / zoom → Amplía el globo",
-				"aleja(r) / reducir / disminuir → Aleja el globo"
+				"Gira(r) / Giro / Rota(r) → Inicia rotación automática",
+				"No gira(r) / No giro / No rota(r) → Para la rotación automática",
+				"Acerca(r) / Aumenta(r) / Amplía(r) / zoom → Amplía el globo",
+				"Aleja(r) / Reducir / Disminuir → Aleja el globo"
 			]
 		},
 		{
 			title: "Reproducción de música",
 			lines: [
-				"reproducir / play / empezar / reanuda(r) → Reproduce la canción",
-				"pausa(r) / para(r) / stop → Pausa la canción",
-				"siguiente / cambia(r) / pasa(r) / skip / next → Siguiente canción",
-				"anterior / vuelve / volver / regresa(r) → Canción anterior"
+				"Reproducir / Play / Empezar / Reanuda(r) → Reproduce la canción",
+				"Pausa(r) / Para(r) / Stop → Pausa la canción",
+				"Siguiente / Cambia(r) / Pasa(r) / Skip / Next → Siguiente canción",
+				"Anterior / Vuelve / Volver / Regresa(r) → Canción anterior"
 			]
 		},
 		{
 			title: "Favoritos y navegación",
 			lines: [
-				"favoritos → Abrir lista de favoritos",
-				"añadir a favoritos / favorito / me gusta → Añade la canción a favoritos",
-				"quitar de favoritos / eliminar de favoritos / eliminar favorito / no me gusta → Quita la canción de favoritos",
-				"ayuda / help → Abrir ayuda",
-				"cerrar / volver / salir / close → Cerrar ayuda o favoritos",
-				"normal → Volver al modo normal (globo)",
-				"control gestual → Cambiar al modo de control por gestos"
+				"Favoritos → Abrir lista de favoritos",
+				"Añadir a favoritos / Favorito / Me gusta → Añade la canción a favoritos",
+				"Quitar de favoritos / Eliminar de favoritos / Eliminar favorito / No me gusta → Quita la canción de favoritos",
+				"Ayuda / Help → Abrir ayuda",
+				"Cerrar / Volver / Salir / Close → Cerrar ayuda o favoritos",
+				"Normal → Volver al modo normal (globo)",
+				"Control gestual → Cambiar al modo de control por gestos"
 			]
 		},
 		{
@@ -173,8 +173,9 @@ function drawVoiceHelp(contentHeight, contentY) {
 		{
 			title: "Búsqueda de países",
 			lines: [
-				"ir a [país] / quiero [país] → Selecciona un país y reproduce música de ese país",
-				"Ejemplos: 'ir a España', 'quiero Argentina', 'México'"
+				"[Nombre del país] → Selecciona un país y reproduce música de ese país",
+				"Ejemplos: 'España', 'Argentina', 'México'",
+				"Aleatorio / Random → Te lleva a un país seleccionado al azar"
 			]
 		},
 		{
