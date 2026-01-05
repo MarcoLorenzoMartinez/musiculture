@@ -98,18 +98,22 @@ function removeFavorite(id) {
 }
 
 function drawFavoritesUI() {
+	// Área de contenido
 	const contentY = menuHeight;
 	const contentHeight = height - menuHeight - playerHeight;
 	
+	// Fondo
 	fill(30, 30, 35);
 	rect(0, contentY, width, contentHeight);
 
+	// Título
 	fill(255);
 	textAlign(CENTER, TOP);
 	textSize(32);
 	textStyle(BOLD);
 	text("Mis Favoritos", width / 2, contentY + 30);
 
+	// Mensaje si no hay favoritos
 	if (favorites.length === 0) {
 		fill(200);
 		textSize(18);
@@ -119,6 +123,7 @@ function drawFavoritesUI() {
 		return;
 	}
 
+	// Proporciones de las tarjetas
 	const cardWidth = 280;
 	const cardHeight = 100;
 	const gap = 20;
@@ -126,16 +131,21 @@ function drawFavoritesUI() {
 	const startX = (width - (cols * (cardWidth + gap) - gap)) / 2;
 	const startY = contentY + 90;
 
+	// Cálculo del scroll máximo
 	const rows = Math.ceil(favorites.length / cols);
 	const totalHeight = rows * (cardHeight + gap);
 	maxFavoritesScroll = max(0, totalHeight - contentHeight + 120);
 
+	// Dibujo con recorte
 	push();
 	drawingContext.save();
+	const clipPaddingTop = 20;
 	drawingContext.beginPath();
-	drawingContext.rect(0, startY, width, contentHeight - 90);
+	drawingContext.rect(0, startY - clipPaddingTop, width, contentHeight - 90 + clipPaddingTop);
 	drawingContext.clip();
 
+
+	// Dibujar cada tarjeta
 	favorites.forEach((fav, index) => {
 		const col = index % cols;
 		const row = Math.floor(index / cols);
@@ -147,9 +157,11 @@ function drawFavoritesUI() {
 		}
 	});
 
+	// Restaurar contexto
 	drawingContext.restore();
 	pop();
 
+	// Indicador de scroll
 	if (maxFavoritesScroll > 0) {
 		fill(100);
 		textSize(14);
