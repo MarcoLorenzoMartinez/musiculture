@@ -183,7 +183,7 @@ function drawVoiceHelp(contentHeight, contentY) {
 			lines: [
 				"Habla claro y espera un segundo entre comandos",
 				"El control por voz solo funciona en este modo",
-				"Se puede combinar con el ratón para interactuar con el globo si es necesario"
+				"En caso de fallo, puedes seguir usando el ratón como en el modo normal"
 			]
 		}
 	];
@@ -227,10 +227,10 @@ function drawHandHelp(contentHeight, contentY) {
 		{
 			title: "Teclado y consejos",
 			lines: [
-				"Tecla 'C' → simula un clic central (opcional)",
 				"Se recomienda usar ambas manos: derecha para rotar, izquierda para seleccionar",
 				"Evita mover demasiado rápido la mano para una detección precisa",
-				"El recuadro de cámara muestra la posición de tus manos"
+				"El recuadro de cámara muestra la posición de tus manos",
+				"En caso de fallo, puedes seguir usando el ratón como en el modo normal"
 			]
 		}
 	];
