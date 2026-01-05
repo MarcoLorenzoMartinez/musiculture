@@ -10,22 +10,28 @@ let favoritesScrollY = 0;
 let maxFavoritesScroll = 0;
 const MAX_FAVORITES = 20;
 
+// Cargar favoritos desde localStorage al iniciar
 function loadFavorites() {
 	const saved = localStorage.getItem("musiculture_favorites");
 	favorites = saved ? JSON.parse(saved) : [];
 }
 
+// Guardar favoritos en localStorage
 function saveFavorites() {
 	localStorage.setItem("musiculture_favorites", JSON.stringify(favorites));
 }
 
+// Cargar imágenes de arte y banderas de favoritos
 function loadFavoriteImages() {
 	favorites.forEach(fav => {
+		// Cargar imagen de arte si no está ya cargada
 		if (fav.artwork && !favoriteArtworks[fav.id]) {
 			loadImage(fav.artwork, img => {
 				favoriteArtworks[fav.id] = img;
 			});
 		}
+
+		// Cargar imagen de bandera si no está ya cargada
 		if (fav.flag && !favoriteFlagImgs[fav.flag]) {
 			const flagUrl = `https://flagcdn.com/w80/${fav.flag}.png`;
 			loadImage(flagUrl, img => {
@@ -35,9 +41,12 @@ function loadFavoriteImages() {
 	});
 }
 
+// Marcar o desmarcar la canción actual como favorita
 function toggleFavorite() {
+	// Asegurarse de que hay una canción actual
 	if (!currentAudio || !currentSongInfo) return;
 
+	// Crear objeto de favorito
 	const favObj = {
 		track: currentSongInfo.track,
 		artist: currentSongInfo.artist,
@@ -48,9 +57,12 @@ function toggleFavorite() {
 		id: playlist[currentIndex].id
 	};
 
+	// Verificar si ya está en favoritos
 	const existing = favorites.find(f => f.id === favObj.id);
 
+	// Añadir o eliminar de favoritos según corresponda
 	if (existing) {
+		// Eliminar de favoritos
 		favorites = favorites.filter(f => f.id !== favObj.id);
 		isFavorite = false;
 	} else {
@@ -61,14 +73,18 @@ function toggleFavorite() {
             return;
         }
 
+		// Añadir a favoritos
         favorites.push(favObj);
         isFavorite = true;
 
+		// Cargar imágenes de portada si no están ya cargadas
 		if (favObj.artwork && !favoriteArtworks[favObj.id]) {
 			loadImage(favObj.artwork, img => {
 				favoriteArtworks[favObj.id] = img;
 			});
 		}
+
+		// Cargar imagen de bandera
 		if (favObj.flag && !favoriteFlagImgs[favObj.flag]) {
 			const flagUrl = `https://flagcdn.com/w80/${favObj.flag}.png`;
 			loadImage(flagUrl, img => {
@@ -77,10 +93,13 @@ function toggleFavorite() {
 		}
 	}
 
+	// Guardar cambios
 	saveFavorites();
 }
 
+// Eliminar un favorito por ID
 function removeFavorite(id) {
+	// Detener reproducción si es la canción actual
 	if (currentSongInfo && currentSongInfo.id === id) {
 		if (currentAudio) {
 			currentAudio.stop();
@@ -93,10 +112,14 @@ function removeFavorite(id) {
 		isPlaying = false;
 	}
 
+	// Eliminar de la lista de favoritos
 	favorites = favorites.filter(f => f.id !== id);
+
+	// Guardar cambios
 	saveFavorites();
 }
 
+// Dibujar la interfaz de favoritos
 function drawFavoritesUI() {
 	// Área de contenido
 	const contentY = menuHeight;
@@ -170,19 +193,24 @@ function drawFavoritesUI() {
 	}
 }
 
+// Dibujar una tarjeta de favorito para una canción
 function drawFavoriteCard(fav, x, y, w, h, index) {
+	// Detectar si el ratón está sobre la tarjeta
 	const isHover = mouseX > x && mouseX < x + w && 
 	                mouseY > y && mouseY < y + h;
 
-	if (isHover) {
+	// Fondo de la tarjeta
+	if (isHover) { // Resaltar al pasar el ratón
 		fill(60, 80, 60);
 		stroke(140, 200, 140);
 		strokeWeight(2);
-	} else {
+	} else { // Normal
 		fill(45, 50, 55);
 		stroke(70, 75, 80);
 		strokeWeight(1);
 	}
+	
+	// Dibujar rectángulo redondeado
 	rect(x, y, w, h, 8);
 	noStroke();
 
@@ -201,13 +229,14 @@ function drawFavoriteCard(fav, x, y, w, h, index) {
     textStyle(BOLD);
     text(index + 1, badgeX + badgeSize / 2, badgeY + badgeSize / 2);
 
+	// Imagen de portada
 	const artSize = 80;
 	const artX = x + 10;
 	const artY = y + 10;
 
-	if (favoriteArtworks[fav.id]) {
+	if (favoriteArtworks[fav.id]) { // Dibujar imagen si está cargada
 		image(favoriteArtworks[fav.id], artX, artY, artSize, artSize);
-	} else {
+	} else { // Placeholder si no hay imagen
 		fill(80);
 		rect(artX, artY, artSize, artSize, 4);
 		fill(150);
@@ -216,6 +245,7 @@ function drawFavoriteCard(fav, x, y, w, h, index) {
 		text("♪", artX + artSize / 2, artY + artSize / 2);
 	}
 
+	// Imagen de bandera
 	if (fav.flag && favoriteFlagImgs[fav.flag]) {
 		const flagW = 24;
 		const flagH = 16;
@@ -224,25 +254,30 @@ function drawFavoriteCard(fav, x, y, w, h, index) {
 		image(favoriteFlagImgs[fav.flag], flagX, flagY, flagW, flagH);
 	}
 
+	// Texto de información
 	const textX = artX + artSize + 12;
 	const textY = y + 15;
 	const textW = w - artSize - 60;
 
+	// Canción
 	fill(255);
 	textAlign(LEFT, TOP);
 	textSize(16);
 	textStyle(BOLD);
 	text(truncateText(fav.track, textW, 16), textX, textY);
 
+	// Artista
 	textSize(13);
 	textStyle(NORMAL);
 	fill(200);
 	text(truncateText(fav.artist, textW, 13), textX, textY + 22);
-
+	
+	// País
 	textSize(11);
 	fill(150);
 	text(fav.country, textX, textY + 42);
 
+	// Botón de eliminar
 	const delX = x + w - 20;
 	const delY = y + 10;
 	const delSize = 16;

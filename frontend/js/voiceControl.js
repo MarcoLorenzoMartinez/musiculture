@@ -1,6 +1,7 @@
-// --------------------------
-//   VOICE CONTROL
-// --------------------------
+/* voiceControl.js
+    Control por voz usando la API Web Speech
+*/
+
 let voiceActive = false;
 let recognition;
 
