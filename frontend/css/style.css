@@ -8,6 +8,7 @@
 	margin: 0 auto;
 }
 
+/* Cursor al arrastrar el globo */
 #globe:active {
 	cursor: grabbing;
 }
