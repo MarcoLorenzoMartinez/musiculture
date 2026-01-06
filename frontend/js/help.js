@@ -5,19 +5,24 @@
 let helpScrollY = 0;
 let maxHelpScroll = 0;
 
+// Dibujar la interfaz de ayuda
 function drawHelpUI() {
+	// Área de contenido
 	const contentY = menuHeight;
 	const contentHeight = height - menuHeight - playerHeight;
 
+	// Fondo
 	fill(30, 30, 35);
 	rect(0, contentY, width, contentHeight);
 
+	// Encabezado
 	drawHelpHeader(contentY);
 
 	textStyle(NORMAL);
 	textSize(18);
 	fill(220);
 
+	// Contenido según el modo de interacción
 	if (interactionMode === "voiceControl") {
 		drawVoiceHelp(contentHeight, contentY);
 	} else if (interactionMode === "handControl") {
@@ -27,11 +32,13 @@ function drawHelpUI() {
 	}
 }
 
+// Dibujar el encabezado de la ayuda
 function drawHelpHeader(contentY) {
 	fill(255);
 	textAlign(CENTER, TOP);
 	textSize(32);
 	textStyle(BOLD);
+	// Título según el modo de interacción
 	if (interactionMode === "normal") {
 		text("Uso de la aplicación", width / 2, contentY + 30);
 	} else if (interactionMode === "handControl") {
@@ -41,7 +48,9 @@ function drawHelpHeader(contentY) {
 	}
 }
 
+// Dibujar una sección de ayuda con título y líneas de texto
 function drawHelpSection(title, lines, x, startY) {
+	// Título de la sección
 	fill(180, 220, 180);
 	textAlign(LEFT, TOP);
 	textSize(22);
@@ -52,32 +61,39 @@ function drawHelpSection(title, lines, x, startY) {
 	textSize(18);
 	fill(220);
 
+	// Líneas de la sección con viñetas
 	lines.forEach((line, i) => {
 		text("• " + line, x + 20, startY + 40 + i * 30);
 	});
 }
 
+// Dibujar la ayuda para el modo normal
 function drawGeneralHelp(contentHeight, contentY) {
+	// Posición inicial del contenido
 	const startY = contentY + 90;
 	const lineGap = 36;
 	let y = startY - helpScrollY;
 	let x = 80;
 
+	// Cálculo del scroll máximo
 	const totalContentHeight = lineGap * 30;
 	maxHelpScroll = max(0, totalContentHeight - contentHeight + 120);
 
+	// Dibujo con recorte
 	push();
 	drawingContext.save();
 	drawingContext.beginPath();
 	drawingContext.rect(0, startY, width, contentHeight - 90);
 	drawingContext.clip();
 
+	// Secciones de ayuda
 	drawHelpSection("¿Qué es MUSICULTURE?", [
 		"MUSICULTURE es una app interactiva para descubrir música del mundo",
 		"Explora países en el globo y escucha artistas locales",
 		"Cada país genera una playlist diferente automáticamente"
 	], x, y);
 
+	// Separación entre secciones
 	y += lineGap * 4;
 
 	drawHelpSection("Explorar países", [
@@ -119,9 +135,11 @@ function drawGeneralHelp(contentHeight, contentY) {
 		"Modo de Control por Voz: controla la app usando distintos comandos de voz"
 	], x, y);
 
+	// Restaurar contexto
 	drawingContext.restore();
 	pop();
 
+	// Indicador de scroll (si es necesario)
 	if (maxHelpScroll > 0) {
 		fill(150);
 		textSize(14);
@@ -130,7 +148,9 @@ function drawGeneralHelp(contentHeight, contentY) {
 	}
 }
 
+// Dibujar la ayuda para el modo de control por voz
 function drawVoiceHelp(contentHeight, contentY) {
+	// Secciones de ayuda
 	const sections = [
 		{
 			title: "Control del globo",
@@ -188,15 +208,19 @@ function drawVoiceHelp(contentHeight, contentY) {
 		}
 	];
 
+	// Ancho de columna
 	const colWidth = width / 2 - 40;
 	let col = 0;
 	let rowY = contentY + 80;
 
+	// Dibujar las secciones
 	sections.forEach(section => {
 		const x = 40 + col * (colWidth + 40);
 
+		// Dibujar la sección de ayuda
 		drawHelpSection(section.title, section.lines, x, rowY);
 
+		// Actualizar posición para la siguiente sección, si es necesario cambiar de columna
 		rowY += section.lines.length * 30 + 50;
 		if (rowY > contentHeight - 200) {
 			col++;
@@ -205,7 +229,9 @@ function drawVoiceHelp(contentHeight, contentY) {
 	});
 }
 
+// Dibujar la ayuda para el modo de control gestual
 function drawHandHelp(contentHeight, contentY) {
+	// Secciones de ayuda
 	const sections = [
 		{
 			title: "Rotación del globo",
@@ -235,15 +261,19 @@ function drawHandHelp(contentHeight, contentY) {
 		}
 	];
 
+	// Ancho de columna
 	const colWidth = width / 2 - 40;
 	let col = 0;
 	let rowY = contentY + 80;
 
+	// Dibujar las secciones
 	sections.forEach(section => {
 		const x = 40 + col * (colWidth + 40);
 
+		// Dibujar la sección de ayuda
 		drawHelpSection(section.title, section.lines, x, rowY);
 
+		// Actualizar posición para la siguiente sección, si es necesario cambiar de columna
 		rowY += section.lines.length * 30 + 50;
 		if (rowY > contentHeight - 100) {
 			col++;
