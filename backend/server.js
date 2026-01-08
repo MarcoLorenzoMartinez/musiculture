@@ -5,9 +5,12 @@ import express from "express";
 import fetch from "node-fetch";
 import cors from "cors";
 
+// CONFIGURACIÓN DEL SERVIDOR
+// Crear instancia de Express
 const app = express();
+// Habilitar CORS
 app.use(cors());
-
+// Configurar cabeceras CORS
 app.use((req, res, next) => {
 	res.header("Access-Control-Allow-Origin", "*");
 	res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
@@ -15,8 +18,9 @@ app.use((req, res, next) => {
 });
 
 
-// --- Utilidad para consultar Wikidata ---
+// Función para obtener artistas de un país por su ID de Wikidata
 async function getArtistsByCountry(wikidataId) {
+	// Consulta SPARQL para obtener artistas
 	const query = `
 	SELECT ?artist ?artistLabel (SAMPLE(?appleID) AS ?appleMusicArtistID) ?sitelinks WHERE {
 			VALUES ?country { wd:${wikidataId} }         # País
@@ -36,17 +40,19 @@ async function getArtistsByCountry(wikidataId) {
 		LIMIT 200
 	`;
 
+	// Realizar la consulta a Wikidata
 	const url = "https://query.wikidata.org/sparql?format=json&query=" + encodeURIComponent(query);
 	const response = await fetch(url);
 	const data = await response.json();
 
+	// Mapear resultados
 	return data.results.bindings.map(item => ({
 		artist: item.artistLabel.value,
 		appleMusicId: item.appleMusicArtistID.value
 	})).filter(item => !/^Q\d+$/.test(item.artist));
 }
 
-// --- Endpoint principal ---
+// Endpoint principal
 app.get("/music/:wikidataId", async (req, res) => {
 	const { wikidataId } = req.params;
 	try {
@@ -55,10 +61,10 @@ app.get("/music/:wikidataId", async (req, res) => {
 			return res.status(404).json({ message: "No se encontraron artistas para este país." });
 		}
 
-		// Mezclamos aleatoriamente los resultados
+		// Mezclar aleatoriamente los artistas
 		const shuffled = artists.sort(() => Math.random() - 0.5);
 
-		// Limitamos a unos 10 artistas para no saturar
+		// Enviar respuesta
 		res.json(shuffled);
 	} catch (error) {
 		console.error("Error obteniendo artistas:", error);
@@ -66,7 +72,7 @@ app.get("/music/:wikidataId", async (req, res) => {
 	}
 });
 
-// --- Configuración para Render ---
+// Iniciar el servidor
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
 	console.log(`Servidor en marcha en puerto ${PORT}`);
