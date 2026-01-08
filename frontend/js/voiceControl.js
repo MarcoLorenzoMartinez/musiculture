@@ -1,36 +1,53 @@
-// --------------------------
-//   VOICE CONTROL
-// --------------------------
+/* voiceControl.js
+    Control por voz usando la API Web Speech
+*/
+
 let voiceActive = false;
 let recognition;
 
+// Función para hablar un texto
 function speak(text) {
+    // Detener cualquier habla en curso
+    window.speechSynthesis.cancel();
+
+    // Parar la música si está sonando
+    if (currentAudio && isPlaying) {
+        currentAudio.pause();
+        isPlaying = false;
+    }
+
+    // Crear y configurar el utterance (mensaje de voz)
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = 'es-ES'; // idioma
+    utterance.rate = 1;       // velocidad
+    utterance.pitch = 1;      // tono
+
     window.speechSynthesis.speak(utterance);
 }
 
-
+// Configurar el control por voz
 function setupVoiceControl() {
+    // Verificar compatibilidad
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) {
         alert("Tu navegador no soporta reconocimiento de voz.");
         return;
     }
 
+    // Activar control por voz
     voiceActive = true;
-
     recognition = new SpeechRecognition();
     recognition.lang = "es-ES";   // Idioma del reconocimiento
     recognition.continuous = true;
     recognition.interimResults = false;
 
+    // Manejar resultados de voz
     recognition.onresult = async (event) => {
         // Obtener la transcripción del último resultado en minúsculas y sin acentos
         const transcript = event.results[event.results.length - 1][0].transcript.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""); 
         console.log("Voz:", transcript);
 
-        // ---- COMANDOS DE CONTROL ----
+        // COMANDOS DE VOZ
         // Parar rotación automática del globo
         const stopRotateCommands = ["no girar", "no gira", "no giro", "no rotar", "no rota"];
         if (stopRotateCommands.some(cmd => transcript === cmd)) {
@@ -66,6 +83,7 @@ function setupVoiceControl() {
         // Parar canción
         const pauseCommands = ["pausa", "pausar", "detener", "para", "parar", "parate", "detente", "pause", "stop", "halt", "hold"];
         if (pauseCommands.some(cmd => transcript.includes(cmd))) {
+            // Si está sonando, pausar
             togglePlay();
             return;
         }
@@ -73,8 +91,9 @@ function setupVoiceControl() {
         const playCommands = ["reproducir", "reproduce", "empieza", "empezar", "arranca", "arrancar",
             "reanuda", "reanudar", "continuar", "continua",
              "play", "pon musica","start", "resume"];
-        // Tiene que ser exacto para evitar conflictos con otros comandos
+        // Exacto para evitar conflictos con otros comandos
         if (playCommands.some(cmd => transcript === cmd)) {
+            // Si está pausado, reproducir4
             togglePlay();
             return;
         }
@@ -94,13 +113,16 @@ function setupVoiceControl() {
         }
         // Abrir favoritos
         if (transcript === "favoritos") {
+            // Cambiar al modo favoritos
             setMode("favorites");
             return;
         }
         // Reproducir canción específica en favoritos
         if (mode === "favorites" && transcript.startsWith("reproducir")) {
+            // Parsear el índice del comando de voz
             const index = parseIndexFromSpeech(transcript);
 
+            // Si el índice es válido, reproducir la canción. Si no, avisar.
             if (index && favorites[index - 1]) {
                 playFavorite(favorites[index - 1]);
             } else{
@@ -111,8 +133,10 @@ function setupVoiceControl() {
         }
         // Eliminar canción específica de favoritos
         if (mode === "favorites" && transcript.startsWith("eliminar")) {
+            // Parsear el índice del comando de voz
             const index = parseIndexFromSpeech(transcript);
 
+            // Si el índice es válido, eliminar la canción. Si no, avisar.
             if (index && favorites[index - 1]) {
                 removeFavorite(favorites[index - 1].id);
             } else {
@@ -124,44 +148,66 @@ function setupVoiceControl() {
 
         // Añadir a favoritos
         const favCommands = ["me gusta", "anadir a favoritos", "favorito"];
-        if (favCommands.some(cmd => transcript.includes(cmd))) {
-            toggleFavorite();
+        if (favCommands.some(cmd => transcript === cmd)) {
+            // Añadir a favoritos si no lo es ya
+            if (!isFavorite) {
+                toggleFavorite();
+            }
+            return;
+        }
+        // Quitar de favoritos
+        const unfavCommands = ["no me gusta", "quitar de favoritos", "eliminar favorito", "eliminar de favoritos"];
+        if (unfavCommands.some(cmd => transcript === cmd)) {
+            // Quitar de favoritos si ya lo es
+            if (isFavorite) {
+                toggleFavorite();
+            }
             return;
         }
         // Modo normal (ratón)
         if (transcript.includes("normal")) {
+            // Volver al modo normal
             setInteractionMode("normal");
             return;
         }
         // Modo control por gestos
         if (transcript.includes("control gestual")) {
+            // Cambiar al modo de control por gestos
             setInteractionMode("handControl");
             return;
         }
         // Abrir ayuda
         if (transcript === "ayuda" || transcript === "help") {
+            // Cambiar al modo ayuda
             setMode("help");
             return;
         }
         // Cerrar ayuda / favoritos
         const closeCommands = ["cerrar", "volver", "salir", "close"];
         if ((mode === "help" || mode === "favorites") && closeCommands.some(c => transcript.includes(c))) {
+            // Volver al modo normal
             setMode("normal");
             return;
         }
         // País aleatorio
         if (transcript === "aleatorio" || transcript === "random") {
+            // Seleccionar un país aleatorio
             selectRandomCountry();
             return;
         }
-        // ---- BÚSQUEDA DE PAÍS ----
-        // Ejemplos: "ir a españa", "quiero argentina", "méxico"
-        const countryList = window.loadedCountries.map(c => c.properties.name.toLowerCase()); // Leemos del globo
+        // BÚSQUEDA DE PAÍS
+        // Ejemplos: "argentina", "españa", "méxico", etc.
 
+        // Leer la lista de países cargados en el globo
+        const countryList = window.loadedCountries.map(c => c.properties.name.toLowerCase());
+
+        // Buscar el país mencionado en el comando de voz
         for (let [alias, countryEnglish] of Object.entries(countryTranslations)) {
 
-            if (!transcript.includes(alias)) continue;
-            
+            // Si el alias no coincide, continuar
+            if (transcript !== alias) continue;
+
+            // Si el país no está cargado, avisar y salir
             if (!countryList.includes(countryEnglish.toLowerCase())) {
                 console.log(`El país "${countryEnglish}" no está cargado en el globo.`);
                 resetPlayer();
@@ -170,24 +216,30 @@ function setupVoiceControl() {
                 return;
             }
 
+            // Cargar música para el país detectado
             const wikidataId = await getWikidataId(countryEnglish);
             if (wikidataId) {
                 console.log(`Navegando a ${countryEnglish} (${wikidataId}) por comando de voz.`);
                 loadMusicForCountry(wikidataId, countryEnglish);
             }
+            // Centrar el globo en el país
             focusCountryByName(countryEnglish);
             return;
         }
     };
 
+    // Reiniciar automáticamente el reconocimiento al terminar
     recognition.onend = () => {
         if (voiceActive) recognition.start(); // Reiniciar automáticamente
     };
 }
 
+// Seleccionar un país aleatorio y cargar su música
 function selectRandomCountry() {
+    // Asegurarse de que los países están cargados
     if (!window.loadedCountries || window.loadedCountries.length === 0) return;
 
+    // Seleccionar un país aleatorio de los cargados
     const randomCountry =
         window.loadedCountries[Math.floor(Math.random() * window.loadedCountries.length)];
 
@@ -204,7 +256,7 @@ function selectRandomCountry() {
     });
 }
 
-
+// Centrar el globo en un país por su nombre
 function focusCountryByName(countryName) {
     if (!window.loadedCountries) return;
 
@@ -242,13 +294,14 @@ function focusCountryByName(countryName) {
     svg.selectAll(".country").classed("country-selected", d => d === country);
 }
 
+// Parsear un índice numérico a partir de un comando de voz
 function parseIndexFromSpeech(text) {
     // El texto ya está en minúsculas y sin acentos
     // Número en dígitos
     const digitMatch = text.match(/\b\d+\b/);
     if (digitMatch) return parseInt(digitMatch[0], 10);
 
-    // Número en palabras
+    // Número en palabras (hasta 20, que es el máximo de favoritos)
     const numbers = {
         uno: 1,
         dos: 2,
@@ -272,6 +325,7 @@ function parseIndexFromSpeech(text) {
         veinte: 20
     };
 
+    // Buscar en el texto alguna palabra que coincida con un número, si existe, devolverlo
     for (const word in numbers) {
         if (text.includes(word)) {
             return numbers[word];
@@ -283,7 +337,7 @@ function parseIndexFromSpeech(text) {
 
 
 
-// Diccionario español/aliases a nombre en inglés
+// Diccionario español/aliases a nombre en inglés. Formato: "alias": "Country Name"
 const countryTranslations = {
   "afganistan": "Afghanistan", "afghanistan": "Afghanistan",
   "albania": "Albania",

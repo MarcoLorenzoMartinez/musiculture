@@ -7,16 +7,20 @@ let currentScale, rotation, autoRotate, velocity;
 let globeWidth, globeHeight;
 let selectedCountry = null;
 
+// Inicialización del globo
 function initGlobe(onCountryClick) {
+	// Dimensiones iniciales
 	const container = document.getElementById("globe-container");
 	globeWidth = container.offsetWidth;
 	globeHeight = container.offsetHeight;
 
+	// Configuración inicial
 	currentScale = Math.min(globeWidth, globeHeight) / 2.3;
 	rotation = [0, 0];
 	autoRotate = true;
 	velocity = [-0.1, 0];
 
+	// Proyección y SVG
 	projection = d3.geoOrthographic()
 		.scale(currentScale)
 		.translate([globeWidth / 2, globeHeight / 2])
@@ -53,6 +57,7 @@ function initGlobe(onCountryClick) {
 				.style("pointer-events", "none")
 				.style("opacity", 0);
 
+			// Dibujar países
 			svg.selectAll("path")
 				.data(data.features)
 				.enter()
@@ -62,10 +67,12 @@ function initGlobe(onCountryClick) {
 				.on("mouseover", (event, d) => {
 				tooltip.transition().duration(150).style("opacity", 1);
 
+				// Información del país
 				const countryName = d.properties.name;
 				const isoCode = iso3to2(d.id);
 				const flagUrl = `https://flagcdn.com/w40/${isoCode}.png`;
-
+				
+				// Contenido del tooltip
 				tooltip.html(`
 					<div style="display:flex;align-items:center;gap:8px;">
 					<strong>${countryName}</strong>
@@ -75,16 +82,20 @@ function initGlobe(onCountryClick) {
 					</div>
 				`);
 
+				// Resaltar país
 				d3.select(event.currentTarget).attr("fill", "#81C784");
 				})
+				// Mover tooltip con el ratón
 				.on("mousemove", (event) => {
 					tooltip.style("left", event.pageX + 12 + "px")
 								.style("top", event.pageY - 20 + "px");
 				})
+				// Quitar tooltip y resaltar al salir
 				.on("mouseout", (event) => {
 					tooltip.transition().duration(200).style("opacity", 0);
 					d3.select(event.currentTarget).attr("fill", null);
 				})
+				// Seleccionar país al hacer clic
 				.on("click", (event, d) => {
 					// Desmarcar país anterior
 					svg.selectAll(".country").classed("country-selected", false);
@@ -101,14 +112,16 @@ function initGlobe(onCountryClick) {
 			startAutoRotation();
 		});
 
+	// Añadir interacción de arrastre y zoom
 	addInteraction();
 }
 
+// Obtener el ID del país seleccionado
 function getSelectedCountryID() {
 	return selectedCountry ? selectedCountry.id : null;
 }
 
-// Conversión completa de código ISO3 -> ISO2 (compatible con GeoJSON + FlagCDN)
+// Conversión completa de código ISO3 -> ISO2
 function iso3to2(iso3) {
   const map = {
     AFG: "af", ALA: "ax", ALB: "al", DZA: "dz", ASM: "as", AND: "ad", AGO: "ao", AIA: "ai",
@@ -146,8 +159,10 @@ function iso3to2(iso3) {
   return map[iso3] || iso3?.substring(0, 2).toLowerCase();
 }
 
+// Rotación automática
 function startAutoRotation() {
 	d3.timer(() => {
+		// Actualizar rotación si está habilitada
 		if (autoRotate) {
 			rotation[0] += velocity[0];
 			rotation[1] += velocity[1];
@@ -157,15 +172,19 @@ function startAutoRotation() {
 	});
 }
 
+// Interacción de arrastre y zoom
 function addInteraction() {
 	let lastPos = null;
 
+	// Arrastre para rotar
 	svg.call(
 		d3.drag()
+			// Inicio del arrastre
 			.on("start", (event) => {
 				lastPos = [event.x, event.y];
 				autoRotate = false;
 			})
+			// Durante el arrastre
 			.on("drag", (event) => {
 				const dx = event.x - lastPos[0];
 				const dy = event.y - lastPos[1];
@@ -178,6 +197,7 @@ function addInteraction() {
 			})
 	);
 
+	// Zoom con rueda del ratón
 	svg.on("wheel", (event) => {
 		event.preventDefault();
 		const zoomFactor = event.deltaY > 0 ? 0.9 : 1.1;
@@ -191,6 +211,7 @@ function addInteraction() {
 
 // Ajuste dinámico del tamaño
 function resizeGlobe(newWidth, newHeight) {
+	// Actualizar dimensiones y escala
 	globeWidth = newWidth;
 	globeHeight = newHeight;
 	currentScale = Math.min(globeWidth, globeHeight) / 2.3;
@@ -199,10 +220,12 @@ function resizeGlobe(newWidth, newHeight) {
 		.translate([globeWidth / 2, globeHeight / 2])
 		.scale(currentScale);
 
+	// Actualizar SVG y elementos
 	d3.select("#globe")
 		.attr("width", globeWidth)
 		.attr("height", globeHeight);
 
+	// Actualizar
 	globe
 		.attr("cx", globeWidth / 2)
 		.attr("cy", globeHeight / 2)

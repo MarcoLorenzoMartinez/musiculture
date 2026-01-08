@@ -20,18 +20,22 @@ const INITIAL_BATCH = 2;
 const FETCH_BATCH = 5;
 const MIN_LEFT = 4;
 
+// Dibujar barra inferior del reproductor
 function drawPlayerBar() {
 	fill("#2E7D32");
 	rect(0, height - playerHeight, width, playerHeight);
 
+	// Si no hay canción cargada, no dibujar controles
 	if (!currentSongInfo) return;
 
+	// Centrar controles
 	const centerY = height - playerHeight / 2;
 	const centerX = width / 2;
 
 	const iconSize = 28;
 	const spacing = 70;
 
+	// Botones de control
 	drawIcon(isPlaying ? "⏸" : "▶", centerX, centerY - 5, iconSize + 4, () => togglePlay());
 	if (mode !== "favorites") {
 		drawIcon("⏮", centerX - spacing, centerY - 5, iconSize, () => previousSong());
@@ -39,6 +43,7 @@ function drawPlayerBar() {
 		drawIcon(isFavorite ? "★" : "☆", width - 60, centerY - 5, iconSize, () => toggleFavorite());
 	}
 
+	// Barra de progreso
 	if (currentAudio && currentAudio.elt.duration) {
 		const progressWidth = width * 0.45;
 		const barX = width / 2 - progressWidth / 2;
@@ -49,12 +54,15 @@ function drawPlayerBar() {
 		const currentTime = currentAudio.elt.currentTime;
 		const progress = map(currentTime, 0, duration, 0, progressWidth);
 
+		// Fondo de la barra
 		fill(255, 40);
 		rect(barX, barY, progressWidth, barHeight, 3);
 
+		// Progreso actual
 		fill("#A5D6A7");
 		rect(barX, barY, progress, barHeight, 3);
 
+		// Interacción con la barra de progreso
 		if (mouseIsPressed && mouseY > barY - 5 && mouseY < barY + barHeight + 5 &&
 				mouseX > barX && mouseX < barX + progressWidth) {
 			const clickPos = constrain(mouseX - barX, 0, progressWidth);
@@ -62,6 +70,7 @@ function drawPlayerBar() {
 			currentAudio.elt.currentTime = newTime;
 		}
 
+		// Texto de tiempo
 		fill(255);
 		textSize(12);
 		textAlign(LEFT, CENTER);
@@ -70,11 +79,12 @@ function drawPlayerBar() {
 		text(formatTime(duration), barX + progressWidth + 35, barY + barHeight / 2);
 	}
 
+	// Información de la canción
 	const padding = 25;
+	// Imágenes
 	if (albumArt) {
 		image(albumArt, padding, height - playerHeight + 10, 80, 80);
 	}
-
 	if (albumArt && flagImg) {
 		const flagW = 26;
 		const flagH = 18;
@@ -87,6 +97,7 @@ function drawPlayerBar() {
 		image(flagImg, flagX, flagY, flagW, flagH);
 	}
 
+	// Texto
 	fill(255);
 	textAlign(LEFT, CENTER);
 	textSize(18);
@@ -98,7 +109,9 @@ function drawPlayerBar() {
 	text(currentSongInfo.artist, padding + 100, centerY + 14);
 }
 
+// Cargar música para un país dado
 async function loadMusicForCountry(wikidataId, countryName) {
+	// Resetear estado del reproductor
 	if (currentAudio) {
 		currentAudio.stop();
 		currentAudio.remove();
@@ -110,9 +123,11 @@ async function loadMusicForCountry(wikidataId, countryName) {
 	flagImg = null;
 	isPlaying = false;
 
+	// Obtener artistas del backend
 	const response = await fetch(`https://musiculture-backend.onrender.com/music/${wikidataId}`);
 	const data = await response.json();
 
+	// Comprobar si hay datos válidos
 	if (!Array.isArray(data) || data.length === 0) {
 		console.warn("No hay artistas disponibles para este país");
 		currentSongInfo = null;
@@ -121,12 +136,15 @@ async function loadMusicForCountry(wikidataId, countryName) {
 		return;
 	}
 
+	// Configurar lista de reproducción
 	playlistArtists = data;
 	currentIndex = 0;
 	playlist = [];
 
+	// Cargar canciones
 	await fetchMoreSongs(countryName, INITIAL_BATCH);
 
+	// Cargar bandera del país
 	currentFlagISO = iso3to2(getSelectedCountryID());
 	flagImg = null;
 	if (currentFlagISO) {
@@ -135,10 +153,13 @@ async function loadMusicForCountry(wikidataId, countryName) {
 		loadImage(flagUrl, img => flagImg = img);
 	}
 
+	// Reproducir canción
 	playCurrentSong();
 }
 
+// Precargar más canciones para la lista de reproducción
 async function fetchMoreSongs(countryName, batchSize = FETCH_BATCH) {
+	// Evitar múltiples fetch simultáneos
 	if (isFetching) {
 		pendingFetch = true;
 		return;
@@ -149,18 +170,23 @@ async function fetchMoreSongs(countryName, batchSize = FETCH_BATCH) {
 	try {
 		const newSongs = [];
 
+		// Obtener canciones aleatorias de los artistas en la lista
 		while (newSongs.length < batchSize && playlistArtists.length > 0) {
+			// Seleccionar artista aleatorio
 			const randomArtist = random(playlistArtists);
 			const searchUrl = `https://itunes.apple.com/lookup?id=${randomArtist.appleMusicId}&entity=song&limit=10`;
 
+			// Obtener canciones del artista
 			try {
 				const res = await fetch(searchUrl);
 				const artistData = await res.json();
-				const songs = artistData.results.filter(item => item.kind === "song");
-				if (songs.length === 0) continue;
+				const songs = artistData.results.filter(item => item.kind === "song"); // Filtrar solo canciones
+				if (songs.length === 0) continue; // Si no hay canciones, intentar con otro artista
 
+				// Seleccionar canción aleatoria
 				const randomSong = random(songs);
 
+				// Añadir a la lista de nuevas canciones
 				newSongs.push({
 					artist: randomArtist.artist,
 					track: randomSong.trackName,
@@ -174,13 +200,16 @@ async function fetchMoreSongs(countryName, batchSize = FETCH_BATCH) {
 			}
 		}
 
+		// Filtrar canciones ya existentes en la lista de reproducción
 		const existingIDs = new Set(playlist.map(s => s.id));
 		const filtered = newSongs.filter(s => !existingIDs.has(s.id));
 
+		// Añadir canciones filtradas a la lista de reproducción
 		playlist.push(...filtered);
 	} finally {
 		isFetching = false;
 
+		// Si hubo una solicitud pendiente, procesarla
 		if (pendingFetch) {
 			pendingFetch = false;
 			await fetchMoreSongs(countryName, batchSize);
@@ -188,11 +217,14 @@ async function fetchMoreSongs(countryName, batchSize = FETCH_BATCH) {
 	}
 }
 
+// Reproducir la canción actual en la lista de reproducción
 function playCurrentSong() {
 	if (playlist.length === 0) return;
 
+	// Obtener canción actual
 	const song = playlist[currentIndex];
 
+	// Detener y limpiar audio actual
 	if (currentAudio) {
 		currentAudio.stop();
 		currentAudio.remove();
@@ -200,12 +232,14 @@ function playCurrentSong() {
 
 	selectAll(".musicFrame").forEach(f => f.remove());
 
+	// Iniciar nuevo audio
 	currentAudio = createAudio(song.previewUrl);
 	currentAudio.attribute("controls", false);
 	currentAudio.attribute("class", "musicFrame");
 	currentAudio.style("display", "none");
 	currentAudio.parent(document.body);
 
+	// Actualizar información de la canción
 	currentSongInfo = {
 		artist: song.artist,
 		track: song.track,
@@ -213,37 +247,48 @@ function playCurrentSong() {
 		id: song.id
 	};
 
+	// Actualizar estado del reproductor
 	isFavorite = favorites.some(f => f.id === song.id);
 	isPlaying = true;
 
+	// Cargar imagen del álbum
 	if (song.artwork) {
 		loadImage(song.artwork, img => albumArt = img);
 	} else {
 		albumArt = null;
 	}
 
+	// Reproducir audio
 	currentAudio.play();
+	// Configurar evento al terminar la canción
 	currentAudio.elt.addEventListener("ended", () => nextSong());
 }
 
+// Pasar a la siguiente canción
 async function nextSong() {
+	// Si no hay canciones, salir
 	if (playlist.length === 0) return;
 
+	// Avanzar índice
 	currentIndex++;
 
+	// Si se ha llegado al final de la lista, intentar cargar más canciones
 	if (currentIndex >= playlist.length) {
 		await fetchMoreSongs(currentSongInfo.country);
 		currentIndex = playlist.length - 1;
 	}
 
+	// Reproducir canción
 	playCurrentSong();
 
+	// Si es necesario, precargar más canciones
 	const remaining = playlist.length - currentIndex;
 	if (remaining <= MIN_LEFT) {
 		fetchMoreSongs(currentSongInfo.country);
 	}
 }
 
+// Volver a la canción anterior
 function previousSong() {
 	if (currentIndex > 0) {
 		currentIndex--;
@@ -251,6 +296,7 @@ function previousSong() {
 	}
 }
 
+// Pausar o reanudar reproducción
 function togglePlay() {
 	if (!currentAudio) return;
 	if (isPlaying) {
@@ -262,6 +308,7 @@ function togglePlay() {
 	}
 }
 
+// Reiniciar el reproductor
 function resetPlayer() {
 	if (currentAudio) {
 		currentAudio.stop();
@@ -276,7 +323,9 @@ function resetPlayer() {
 	selectAll(".musicFrame").forEach(f => f.remove());
 }
 
+// Reproducir una canción favorita
 function playFavorite(fav) {
+	// Detener y limpiar audio actual
 	if (currentAudio) {
 		currentAudio.stop();
 		currentAudio.remove();
@@ -284,12 +333,14 @@ function playFavorite(fav) {
 	}
 	selectAll(".musicFrame").forEach(f => f.remove());
 
+	// Iniciar nuevo audio
 	currentAudio = createAudio(fav.previewUrl);
 	currentAudio.attribute("controls", false);
 	currentAudio.attribute("class", "musicFrame");
 	currentAudio.style("display", "none");
 	currentAudio.parent(document.body);
 
+	// Actualizar información de la canción
 	currentSongInfo = {
 		artist: fav.artist,
 		track: fav.track,
@@ -297,9 +348,11 @@ function playFavorite(fav) {
 		id: fav.id
 	};
 
+	// Actualizar estado del reproductor
 	isFavorite = true;
 	isPlaying = true;
 
+	// Cargar imagen del álbum
 	if (fav.artwork) {
 		albumArt = favoriteArtworks[fav.id] || null;
 		if (!albumArt) {
@@ -309,6 +362,7 @@ function playFavorite(fav) {
 		albumArt = null;
 	}
 
+	// Cargar bandera del país
 	currentFlagISO = fav.flag;
 	flagImg = favoriteFlagImgs[fav.flag] || null;
 	if (!flagImg && fav.flag) {
@@ -316,8 +370,10 @@ function playFavorite(fav) {
 		loadImage(flagUrl, img => flagImg = img);
 	}
 
+	// Reproducir audio
 	currentAudio.play();
 
+	// Configurar evento al terminar la canción
 	currentAudio.elt.addEventListener("ended", () => {
 		isPlaying = false;
 	});
