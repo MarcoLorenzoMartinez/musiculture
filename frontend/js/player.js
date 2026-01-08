@@ -293,6 +293,11 @@ function previousSong() {
 	if (currentIndex > 0) {
 		currentIndex--;
 		playCurrentSong();
+	} else {
+		// Si es la primera canción, reiniciarla
+		if (currentAudio) {
+			playCurrentSong();
+		}
 	}
 }
 
