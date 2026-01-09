@@ -7,6 +7,12 @@ let interactionMode = "normal"; // "normal", "handControl", "voiceControl"
 
 // Cambiar modo de visualización
 function setMode(newMode) {
+	// Si el modo actual es favoritos, limpiar selección y reiniciar reproductor
+	if (mode === "favorites") {
+		clearSelectedCountry();
+		resetPlayer();
+	}
+
 	// Si ya está en el modo, volver a normal
 	if (mode === newMode) {
 		mode = "normal";
