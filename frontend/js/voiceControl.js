@@ -234,26 +234,78 @@ function setupVoiceControl() {
     };
 }
 
-// Seleccionar un país aleatorio y cargar su música
-function selectRandomCountry() {
-    // Asegurarse de que los países están cargados
+// // Seleccionar un país aleatorio y cargar su música
+// function selectRandomCountry() {
+//     // Asegurarse de que los países están cargados
+//     if (!window.loadedCountries || window.loadedCountries.length === 0) return;
+
+//     // Seleccionar un país aleatorio de los cargados
+//     const randomCountry =
+//         window.loadedCountries[Math.floor(Math.random() * window.loadedCountries.length)];
+
+//     const countryName = randomCountry.properties.name;
+
+//     console.log("País aleatorio:", countryName);
+
+//     // Centrar el globo
+//     focusCountryByName(countryName);
+
+//     // Cargar música
+//     getWikidataId(countryName).then(id => {
+//         if (id) loadMusicForCountry(id, countryName);
+//     });
+// }
+
+// Seleccionar un país aleatorio que tenga artistas y cargar su música
+async function selectRandomCountry() {
+    // Comprobar que los países están cargados
     if (!window.loadedCountries || window.loadedCountries.length === 0) return;
 
-    // Seleccionar un país aleatorio de los cargados
-    const randomCountry =
-        window.loadedCountries[Math.floor(Math.random() * window.loadedCountries.length)];
+    let countryFound = false; // Indica si hemos encontrado un país con artistas
+    let attempts = 0;         // Contador de intentos para evitar bucles infinitos
 
-    const countryName = randomCountry.properties.name;
+    // Intentar seleccionar un país hasta encontrar uno válido o alcanzar el límite de intentos
+    while (!countryFound && attempts < window.loadedCountries.length) {
+        // Elegir un país aleatorio de la lista
+        const randomCountry = window.loadedCountries[Math.floor(Math.random() * window.loadedCountries.length)];
+        const countryName = randomCountry.properties.name;
 
-    console.log("País aleatorio:", countryName);
+        console.log("Intentando país:", countryName);
 
-    // Centrar el globo
-    focusCountryByName(countryName);
+        // Obtener el ID de Wikidata del país
+        const id = await getWikidataId(countryName);
+        if (id) {
+            // Comprobar si el país tiene artistas disponibles
+            const hasArtists = await checkIfCountryHasArtists(id);
 
-    // Cargar música
-    getWikidataId(countryName).then(id => {
-        if (id) loadMusicForCountry(id, countryName);
-    });
+            // Si tiene artistas, centrar, avisar del país al que se está yendo y cargar música
+            if (hasArtists) {
+                speak("Viajando a " + countryName);
+                focusCountryByName(countryName);
+                await loadMusicForCountry(id, countryName);
+                countryFound = true; // Marcamos que encontramos un país válido
+            } else {
+                console.warn("No hay artistas para", countryName, ". Buscando otro país");
+            }
+        }
+
+        attempts++; // Incrementar el contador de intentos
+    }
+
+    // Aviso si no se encontró ningún país con artistas
+    if (!countryFound) {
+        console.warn("No se encontró ningún país con artistas");
+    }
+}
+
+// Función auxiliar para comprobar si hay artistas en un país dado su ID de Wikidata
+async function checkIfCountryHasArtists(wikidataId) {
+    // Llamar al backend para obtener los artistas del país
+    const response = await fetch(`https://musiculture-backend.onrender.com/music/${wikidataId}`);
+    const data = await response.json();
+
+    // Devolver true si hay al menos un artista, false en caso contrario
+    return Array.isArray(data) && data.length > 0;
 }
 
 // Centrar el globo en un país por su nombre
