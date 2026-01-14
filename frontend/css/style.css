@@ -1,5 +1,5 @@
 /* style.css */
-/* Define el estilo base para MUSICULTURE con fondo oscuro y texto blanco. */
+/* Define el estilo base para MUSICULTURE */
 
 /* SVG del globo */
 #globe {
@@ -8,6 +8,7 @@
 	margin: 0 auto;
 }
 
+/* Cursor al arrastrar el globo */
 #globe:active {
 	cursor: grabbing;
 }
